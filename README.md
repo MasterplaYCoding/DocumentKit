@@ -8,10 +8,9 @@ binary assets, integrity checks, a way to open last year's file, and a save that
 does not destroy the previous version when it fails. DocumentKit is that layer,
 extracted from a real editor and made general.
 
-> **Status: pre-release, working toward `0.1.0`.** The library and its format
-> are implemented and covered by tests on Linux, Windows and macOS. Not yet
-> published to Maven Central — see [Getting started](#getting-started) for how
-> to consume it today. `documentkit-android` is verified by an independent
+> The library and its format are implemented and covered by tests on Linux,
+> Windows and macOS, with an independent consumer build per platform proving
+> the published artifacts resolve. `documentkit-android` is verified by an
 > Android consumer build; it has no instrumented tests yet. Anything not
 > documented below is not built; see [Roadmap](#roadmap).
 
@@ -27,7 +26,7 @@ extracted from a real editor and made general.
 | `documentkit-android` | Android. Brings in both of the above. |
 | `documentkit-core` | Only if you are writing your own I/O layer and want the format types, codec and migrations alone. |
 
-**Not yet on Maven Central.** Until it is, build and consume it locally:
+Build it once into your local Maven repository:
 
 ```bash
 git clone https://github.com/MasterplaYCoding/DocumentKit.git
@@ -68,6 +67,24 @@ stop doing so.
 
 **Requirements:** JDK 17, Kotlin 2.2.0, Android API 24+ (compiled against
 SDK 36).
+
+<details>
+<summary>Why <code>mavenLocal()</code> and not <code>mavenCentral()</code>?</summary>
+
+Because it is not on Maven Central yet, and saying otherwise would be the kind
+of claim this project spends a lot of words avoiding.
+
+The publishing pipeline is built and tested — see [RELEASING.md](RELEASING.md)
+and [`.github/workflows/release.yml`](.github/workflows/release.yml), which
+gates a publish on the same coordinate verification and consumer builds CI
+runs. It is deliberately held until the `0.2` API settles, since a Central
+version is permanently immutable.
+
+The group id `io.github.masterplaycoding.documentkit` is already the one
+Central will verify, so the coordinates above will not change when it lands —
+only the repository line.
+
+</details>
 
 > **Every I/O entry point is a `suspend` function** and runs on
 > `Dispatchers.IO`. The snippets below use `runBlocking` to stay short; in an
@@ -252,8 +269,8 @@ Android app, a CLI and a test.
 
 | Milestone | Contents | State |
 |---|---|---|
-| `0.1.0` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export, Maven Central publication | in progress |
-| `0.2` | Inspect/validate CLI, integrity reporting | planned |
+| `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
+| `0.2` | Inspect/validate CLI, integrity reporting, and the first Maven Central release | next |
 | `0.3` | Lantr legacy importer, Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
 
