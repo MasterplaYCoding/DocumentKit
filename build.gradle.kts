@@ -4,11 +4,12 @@ plugins {
     alias(libs.plugins.kotlinAndroid) apply false
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.mavenPublish) apply false
 }
 
 allprojects {
     group = "io.github.masterplaycoding.documentkit"
-    version = "0.1.0-SNAPSHOT"
+    version = providers.gradleProperty("VERSION_NAME").get()
 }
 
 /** Where verifyPublishedCoordinates publishes to and then reads back. */
@@ -17,6 +18,53 @@ val testRepository: Provider<Directory> = layout.buildDirectory.dir("test-repo")
 // Publishing metadata is applied uniformly, so an artifact resolved from a
 // repository carries the same identity as one built here.
 subprojects {
+    plugins.withId("com.vanniktech.maven.publish") {
+        extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+            publishToMavenCentral()
+
+            // Signing is required by Maven Central and impossible without a
+            // key, so it is enabled only when one is configured. Otherwise an
+            // ordinary local build - or CI, which never publishes - would fail
+            // on a credential it has no reason to hold.
+            if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+                signAllPublications()
+            }
+
+            pom {
+                name.set("DocumentKit ${project.name}")
+                description.set(
+                    "Versioned application documents with structured data and binary assets.",
+                )
+                url.set("https://github.com/MasterplaYCoding/DocumentKit")
+                inceptionYear.set("2026")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                        distribution.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                // Maven Central rejects a POM without developers.
+                developers {
+                    developer {
+                        id.set("MasterplaYCoding")
+                        name.set("Matei Ursache")
+                        url.set("https://github.com/MasterplaYCoding")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/MasterplaYCoding/DocumentKit")
+                    connection.set("scm:git:git://github.com/MasterplaYCoding/DocumentKit.git")
+                    developerConnection.set(
+                        "scm:git:ssh://git@github.com/MasterplaYCoding/DocumentKit.git",
+                    )
+                }
+            }
+        }
+    }
+
+    // The build-local repository the coordinate check publishes to and reads
+    // back. Registered separately from the plugin's own Central target.
     plugins.withId("maven-publish") {
         extensions.configure<PublishingExtension> {
             // A build-local repository, deliberately preferred over mavenLocal
@@ -28,25 +76,6 @@ subprojects {
                 maven {
                     name = "localTestRepo"
                     url = testRepository.get().asFile.toURI()
-                }
-            }
-
-            publications.withType<MavenPublication>().configureEach {
-                pom {
-                    name.set("DocumentKit ${project.name}")
-                    description.set(
-                        "Versioned application documents with structured data and binary assets.",
-                    )
-                    url.set("https://github.com/MasterplaYCoding/DocumentKit")
-                    licenses {
-                        license {
-                            name.set("MIT License")
-                            url.set("https://opensource.org/licenses/MIT")
-                        }
-                    }
-                    scm {
-                        url.set("https://github.com/MasterplaYCoding/DocumentKit")
-                    }
                 }
             }
         }
@@ -96,20 +125,23 @@ tasks.register("verifyPublishedCoordinates") {
             val directory = File(root, "$groupPath/$artifact/$releaseVersion")
             val published = directory.listFiles()?.map { it.name }.orEmpty()
 
-            // Every Gradle publication produces at least a POM and Gradle
-            // module metadata. Checking for both catches a publication that
-            // exists but produced no resolvable variants.
+            // A POM and Gradle module metadata catch a publication that exists
+            // but produced no resolvable variants. Sources and javadoc jars are
+            // checked because Maven Central rejects a release without them, and
+            // finding that out during an upload is far too late - the Android
+            // module was short a javadoc jar for exactly this reason.
             //
             // Matched by prefix and extension rather than by exact name: a
             // Maven repository rewrites SNAPSHOT filenames to unique timestamps
             // (documentkit-io-0.1.0-20260908.085936-1.pom), while a release
             // version keeps the plain form.
-            for (suffix in listOf("pom", "module")) {
+            for (suffix in listOf("pom", "module", "-sources.jar", "-javadoc.jar")) {
                 val found = published.any {
-                    it.startsWith("$artifact-") && it.endsWith(".$suffix")
+                    it.startsWith("$artifact-") &&
+                        it.endsWith(if (suffix.startsWith("-")) suffix else ".$suffix")
                 }
                 if (!found) {
-                    missing += "$artifact/$releaseVersion/$artifact-*.$suffix"
+                    missing += "$artifact/$releaseVersion/$artifact-*$suffix"
                 }
             }
         }
