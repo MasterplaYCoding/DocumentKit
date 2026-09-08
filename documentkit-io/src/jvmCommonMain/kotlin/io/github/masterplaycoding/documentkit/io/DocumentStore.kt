@@ -67,6 +67,153 @@ public class DocumentStore(
     }
 
     /**
+     * Reads what a container says about itself, without decoding a model.
+     *
+     * Cheap: the manifest and the entry list only, no content streamed. Use it
+     * to answer "what is this file?" for a document belonging to an
+     * application this build knows nothing about.
+     */
+    public suspend fun inspect(file: File): DocumentSummary = withContext(dispatcher) {
+        openArchive(file).use { archive ->
+            val manifest = readManifest(archive)
+            manifest.validate().firstOrNull()?.let { throw DocumentException(it) }
+            summarise(file, archive, manifest)
+        }
+    }
+
+    /**
+     * Checks a container's structure and integrity, collecting every problem.
+     *
+     * Unlike [open], this does not stop at the first error and does not need an
+     * application codec — so it works on any DocumentKit container, and a
+     * thoroughly broken file is diagnosed in one pass rather than one error per
+     * run.
+     *
+     * What it cannot check is the application's half: whether `document.json`
+     * matches a schema, whether a migration chain reaches it, whether the model
+     * is semantically valid. Those need code this store does not have, and
+     * [ValidationReport.scope] says so rather than letting a green result imply
+     * more than it means.
+     */
+    public suspend fun validate(file: File): ValidationReport = withContext(dispatcher) {
+        val errors = mutableListOf<DocumentError>()
+        val verified = mutableListOf<String>()
+        var summary: DocumentSummary? = null
+
+        try {
+            openArchive(file).use { archive ->
+                val inventory = ArchiveInventory.validate(archive, limits)
+                errors += inventory.errors
+
+                val manifest = try {
+                    readManifest(archive)
+                } catch (cause: DocumentException) {
+                    errors += cause.error
+                    return@use
+                }
+
+                errors += manifest.validate()
+                summary = summarise(file, archive, manifest)
+
+                // Entry-level integrity, one entry at a time, so a single
+                // corrupt asset does not hide the state of the others.
+                val documentEntry = archive.getEntry(DocumentKitFormat.DOCUMENT_ENTRY)
+                if (documentEntry == null) {
+                    errors += DocumentError.MissingEntry(DocumentKitFormat.DOCUMENT_ENTRY)
+                } else {
+                    val measured = archive.getInputStream(documentEntry).use {
+                        it.copyMeasured(null, limits.maxDocumentBytes, "document size")
+                    }
+                    integrityError(
+                        DocumentKitFormat.DOCUMENT_ENTRY,
+                        manifest.documentLength,
+                        manifest.documentSha256,
+                        measured.length,
+                        measured.sha256,
+                    )?.also { errors += it } ?: verified.add(DocumentKitFormat.DOCUMENT_ENTRY)
+                }
+
+                for (asset in manifest.assets) {
+                    val path = DocumentKitFormat.assetPath(asset.id)
+                    val entry = inventory.assets[asset.id]
+                    if (entry == null) {
+                        errors += DocumentError.MissingEntry(path)
+                        continue
+                    }
+                    val measured = try {
+                        archive.getInputStream(entry).use {
+                            it.copyMeasured(null, limits.maxAssetBytes, "asset size")
+                        }
+                    } catch (cause: DocumentException) {
+                        errors += cause.error
+                        continue
+                    }
+                    integrityError(path, asset.length, asset.sha256, measured.length, measured.sha256)
+                        ?.also { errors += it } ?: verified.add(path)
+                }
+
+                for (id in inventory.assets.keys) {
+                    if (manifest.assets.none { it.id == id }) {
+                        errors += DocumentError.InvalidManifest(
+                            "asset '${id.value}' is present but not indexed",
+                        )
+                    }
+                }
+            }
+        } catch (cause: DocumentException) {
+            errors += cause.error
+        }
+
+        ValidationReport(summary, errors.distinct(), verified)
+    }
+
+    private fun openArchive(file: File): ZipFile {
+        if (!file.isFile) {
+            throw DocumentException(
+                DocumentError.IoFailure("open", "'${file.path}' is not a file"),
+            )
+        }
+        if (file.length() > limits.maxArchiveBytes) {
+            throw DocumentException(
+                DocumentError.LimitExceeded("archive size", limits.maxArchiveBytes),
+            )
+        }
+        return try {
+            ZipFile(file)
+        } catch (cause: Exception) {
+            throw DocumentException(
+                DocumentError.IoFailure("open", cause.message ?: "not a readable archive"),
+            )
+        }
+    }
+
+    private fun summarise(file: File, archive: ZipFile, manifest: Manifest): DocumentSummary =
+        DocumentSummary(
+            containerVersion = manifest.containerVersion,
+            applicationId = manifest.applicationId,
+            schemaVersion = manifest.schemaVersion,
+            documentId = manifest.documentId,
+            documentLength = manifest.documentLength,
+            assets = manifest.assets,
+            entryCount = archive.size(),
+            archiveBytes = file.length(),
+        )
+
+    private fun integrityError(
+        entry: String,
+        expectedLength: Long,
+        expectedSha256: String,
+        actualLength: Long,
+        actualSha256: String,
+    ): DocumentError? = when {
+        actualLength != expectedLength ->
+            DocumentError.IntegrityMismatch(entry, "$expectedLength bytes", "$actualLength bytes")
+        !actualSha256.equals(expectedSha256, ignoreCase = true) ->
+            DocumentError.IntegrityMismatch(entry, "sha256 $expectedSha256", "sha256 $actualSha256")
+        else -> null
+    }
+
+    /**
      * Opens a document from a staging file this store then owns.
      *
      * Used by the Android module after copying a provider URI into private

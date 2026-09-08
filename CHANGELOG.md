@@ -7,7 +7,7 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
-Working toward `0.1.0`, the first published release. See
+Working toward `0.2.0`, the first published release. See
 [RELEASING.md](RELEASING.md) for what publishing requires.
 
 ### Fixed
@@ -30,6 +30,15 @@ Working toward `0.1.0`, the first published release. See
   undefined identifiers and no imports for an API spanning two packages.
 
 ### Added
+
+- **`documentkit-cli`**, with `inspect` and `validate`. Works on a container
+  belonging to any application, because neither command needs a codec - and
+  neither claims more than it checked: validation covers container structure
+  and integrity, and says in its own output that the application schema was
+  not examined.
+- `DocumentStore.inspect` and `DocumentStore.validate`: codec-free reading of
+  what a container declares, and a full integrity check that collects every
+  problem rather than stopping at the first.
 
 - `verifyPublishedCoordinates`: publishes to a build-local repository and
   fails if any expected artifact — POM, module metadata, sources jar, javadoc
@@ -76,7 +85,7 @@ Working toward `0.1.0`, the first published release. See
 
 ### Not yet implemented
 
-The `inspect` / `validate` CLI, real API documentation (AGP's bundled Dokka
+Real API documentation (AGP's bundled Dokka
 crashes on Kotlin 2.2, so javadoc jars are empty stubs for now), the Lantr
 legacy importer, benchmarks, and fuzzing.
 

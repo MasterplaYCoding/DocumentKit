@@ -11,3 +11,4 @@ build/test-repo/
 consumer-check-android/.gradle/
 consumer-check-android/build/
 consumer-check-android/local.properties
+documentkit-cli/build/

@@ -98,6 +98,8 @@ val expectedArtifacts = listOf(
     // A plain Android library module. Its publication has to be registered by
     // hand, which is why it is the one that went missing.
     "documentkit-android",
+    // A JVM application module; publishable like the rest.
+    "documentkit-cli",
 )
 
 // Captured outside the task block on purpose. Inside tasks.register the

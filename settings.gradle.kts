@@ -32,3 +32,4 @@ dependencyResolutionManagement {
 include(":documentkit-core")
 include(":documentkit-io")
 include(":documentkit-android")
+include(":documentkit-cli")

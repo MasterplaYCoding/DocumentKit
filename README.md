@@ -237,6 +237,51 @@ is real — see [the write-up](docs/decisions/002-atomic-replace-vs-provider-exp
 
 ---
 
+## Inspecting a file from the command line
+
+```bash
+./gradlew :documentkit-cli:installDist
+```
+
+```bash
+documentkit inspect field-notes.dkit
+```
+
+```
+field-notes.dkit
+  container version   1
+  application         example.notebook
+  schema version      1
+  document id         consumer-check-1
+  archive size        1 KiB
+  entries             3
+  document.json       183 B (declared)
+  assets              1, 8 KiB declared
+    cover  8 KiB
+
+Sizes above are declared, not verified. Run `validate` to check them.
+```
+
+`validate` streams every entry and checks actual lengths and SHA-256 digests:
+
+```
+damaged.dkit — example.notebook schema 1
+  ✓ document.json
+  ✗ IntegrityMismatch: entry 'assets/cover' expected 8192 bytes but found 8318 bytes
+
+invalid — 1 problem
+checked: container structure and integrity; application schema not checked
+```
+
+Exit codes are `0` valid, `1` invalid document, `2` bad invocation — kept
+distinct because a build that cannot tell "your document is corrupt" from "you
+typed the wrong flag" teaches people to ignore both. `--json` gives CI a
+machine-readable form.
+
+Both commands work on a container belonging to an application this build knows
+nothing about, and neither claims more than it checked: without your codec, the
+CLI verifies the container and says so in as many words.
+
 ## Guarantees, each with its limit
 
 | What DocumentKit guarantees | Where that stops |
@@ -257,6 +302,7 @@ is real — see [the write-up](docs/decisions/002-atomic-replace-vs-provider-exp
 | `documentkit-core` | Format types, codec, migrations, errors, limits. No Java, no UI toolkit. |
 | `documentkit-io` | Shared JVM/Android archive implementation and local-file save. |
 | `documentkit-android` | Storage Access Framework import and export. |
+| `documentkit-cli` | `inspect` and `validate` for any container. |
 
 The archive implementation lives in one intermediate source set compiled for
 both JVM and Android. Two copies is how they drift.
@@ -270,7 +316,7 @@ Android app, a CLI and a test.
 | Milestone | Contents | State |
 |---|---|---|
 | `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
-| `0.2` | Inspect/validate CLI, integrity reporting, and the first Maven Central release | next |
+| `0.2` | Inspect/validate CLI, integrity reporting | **implemented**, release pending |
 | `0.3` | Lantr legacy importer, Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
 

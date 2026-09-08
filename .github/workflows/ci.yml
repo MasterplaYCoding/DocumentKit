@@ -31,7 +31,7 @@ jobs:
       # Path handling, file locking and atomic-move behaviour genuinely differ
       # between these platforms, and the save path depends on all three.
       - name: JVM tests
-        run: ./gradlew :documentkit-core:jvmTest :documentkit-io:jvmTest --stacktrace
+        run: ./gradlew :documentkit-core:jvmTest :documentkit-io:jvmTest :documentkit-cli:test --stacktrace
 
   android:
     name: android build
