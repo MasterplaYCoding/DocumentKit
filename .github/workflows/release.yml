@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: publish to Maven Central
+    runs-on: ubuntu-latest
+    # A GitHub environment, so the signing key and Central credentials can be
+    # scoped to releases and optionally gated on a manual approval.
+    environment: maven-central
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # The tag is the only thing a human types during a release, so it is the
+      # thing most likely to disagree with the build. Checking it first turns a
+      # mismatch into a failed job rather than an artifact published under the
+      # wrong version, which cannot be taken back once Central has it.
+      - name: Check the tag matches VERSION_NAME
+        run: |
+          version="$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)"
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$tag" ]; then
+            echo "tag v$tag does not match VERSION_NAME=$version in gradle.properties" >&2
+            exit 1
+          fi
+          case "$version" in
+            *-SNAPSHOT) echo "refusing to release a SNAPSHOT version" >&2; exit 1 ;;
+          esac
+          grep -q "## \[$version\]" CHANGELOG.md || {
+            echo "CHANGELOG.md has no '## [$version]' section" >&2; exit 1
+          }
+
+      # Everything the pull-request workflow runs, before anything leaves the
+      # machine. A release is not the place to discover a test failure.
+      - name: Test
+        run: ./gradlew :documentkit-core:jvmTest :documentkit-io:jvmTest --stacktrace
+
+      - name: Verify every expected coordinate
+        run: ./gradlew verifyPublishedCoordinates --stacktrace
+
+      - name: Verify the JVM consumer
+        working-directory: consumer-check
+        run: ./gradlew run --stacktrace
+
+      - name: Verify the Android consumer
+        working-directory: consumer-check-android
+        run: ./gradlew assembleDebug --stacktrace
+
+      # Signing and Gradle's configuration cache conflict, so it is disabled on
+      # the publish invocation rather than fought with.
+      - name: Publish
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
