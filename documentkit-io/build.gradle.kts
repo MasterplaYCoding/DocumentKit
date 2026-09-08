@@ -3,6 +3,7 @@ plugins {
     // The module's own sources contain no @Serializable classes, but its tests
     // define application models, which is exactly how a consumer uses it.
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.androidLibrary)
 }
 
 kotlin {
@@ -10,13 +11,18 @@ kotlin {
 
     jvm()
 
+    androidTarget {
+        publishLibraryVariants("release")
+    }
+
     explicitApi()
 
     sourceSets {
         // An intermediate source set for code that needs java.util.zip and
         // java.nio but must be shared, unchanged, by the JVM and Android
-        // targets. Adding androidTarget() later means adding one dependsOn
-        // line here, not forking the archive implementation.
+        // targets. The archive implementation lives here exactly once: the
+        // alternative is two copies that drift, which is what the project this
+        // was extracted from had.
         val jvmCommonMain by creating {
             dependsOn(commonMain.get())
             dependencies {
@@ -34,5 +40,21 @@ kotlin {
 
         jvmMain.get().dependsOn(jvmCommonMain)
         jvmTest.get().dependsOn(jvmCommonTest)
+
+        androidMain.get().dependsOn(jvmCommonMain)
+    }
+}
+
+android {
+    namespace = "io.github.masterplaycoding.documentkit.io"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }

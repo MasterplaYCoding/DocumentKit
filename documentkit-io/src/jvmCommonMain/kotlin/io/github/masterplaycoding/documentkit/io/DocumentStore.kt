@@ -369,15 +369,44 @@ public class DocumentStore(
     }
 
     /**
-     * Builds a complete, self-consistent archive in a temporary sibling file
-     * and returns it. The caller owns the result.
+     * Builds a complete archive in [workspace] and verifies it, returning the
+     * file. **The caller owns the result and must delete it.**
+     *
+     * This is the operation an exporter needs: somewhere that is not a local
+     * filesystem path - an Android content provider, say - still requires a
+     * finished, verified archive before anything is written to a destination
+     * it cannot roll back.
+     *
+     * Prefer [save] for local files. That runs this and then replaces the
+     * destination atomically, which this does not do.
+     */
+    public suspend fun <T : Any> buildVerifiedArchive(
+        workspace: File,
+        document: T,
+        documentId: String,
+        codec: DocumentCodec<T>,
+        assets: Map<AssetId, AssetSource> = emptyMap(),
+    ): File = withContext(dispatcher) {
+        val staged = buildArchive(workspace, document, documentId, codec, assets)
+        try {
+            openInternal(staged, codec, ownedStagingFile = null).close()
+            staged
+        } catch (cause: Throwable) {
+            staged.delete()
+            throw cause
+        }
+    }
+
+    /**
+     * Builds a complete, self-consistent archive in a temporary file and
+     * returns it. Not verified: [buildVerifiedArchive] and [save] do that.
      *
      * Assets are streamed twice - once to measure and digest, once to write -
      * rather than buffered in memory. Two passes over a 200 MB video is far
      * cheaper than one 200 MB allocation, and it means the manifest's digests
      * describe bytes that were genuinely read from the source.
      */
-    internal suspend fun <T : Any> buildArchive(
+    private suspend fun <T : Any> buildArchive(
         workspace: File,
         document: T,
         documentId: String,
@@ -464,6 +493,16 @@ public class DocumentStore(
         output.putNextEntry(ZipEntry(path))
         output.write(bytes)
         output.closeEntry()
+    }
+
+    /**
+     * Opens a staged archive purely to confirm it is readable, then closes it.
+     *
+     * Used by exporters that build an archive before handing it to a
+     * destination they cannot roll back.
+     */
+    internal suspend fun <T : Any> verifyArchive(file: File, codec: DocumentCodec<T>) {
+        openInternal(file, codec, ownedStagingFile = null).close()
     }
 
     /** Writes an already-built archive to an arbitrary stream, for exporters. */
