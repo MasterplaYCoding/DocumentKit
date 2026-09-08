@@ -28,7 +28,12 @@ kotlin {
             dependsOn(commonMain.get())
             dependencies {
                 api(project(":documentkit-core"))
-                implementation(libs.kotlinx.coroutines.core)
+                // api, not implementation: DocumentStore's public constructor
+                // takes a CoroutineDispatcher, and every I/O entry point is a
+                // suspend function. Coroutines are part of this module's ABI,
+                // so a consumer cannot use it without them on the compile
+                // classpath.
+                api(libs.kotlinx.coroutines.core)
             }
         }
         val jvmCommonTest by creating {

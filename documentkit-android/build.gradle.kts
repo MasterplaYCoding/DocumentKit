@@ -54,5 +54,7 @@ afterEvaluate {
 
 dependencies {
     api(project(":documentkit-io"))
-    implementation(libs.kotlinx.coroutines.core)
+    // api for the same reason as documentkit-io: DocumentTransfer's constructor
+    // takes a CoroutineDispatcher and its operations suspend.
+    api(libs.kotlinx.coroutines.core)
 }

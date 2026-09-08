@@ -20,7 +20,11 @@ kotlin {
 
 dependencies {
     implementation("io.github.masterplaycoding.documentkit:documentkit-io:0.1.0-SNAPSHOT")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    // Deliberately the only dependency. This file used to also declare
+    // kotlinx-coroutines-core, compensating for the library declaring it as
+    // implementation rather than api. Removing that line turns this build into
+    // a regression test: the library's own api declarations must carry
+    // coroutines and serialization to a consumer, or this stops compiling.
 }
 
 application {
