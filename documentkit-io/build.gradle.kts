@@ -1,4 +1,5 @@
 plugins {
+    `maven-publish`
     alias(libs.plugins.kotlinMultiplatform)
     // The module's own sources contain no @Serializable classes, but its tests
     // define application models, which is exactly how a consumer uses it.
