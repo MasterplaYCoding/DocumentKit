@@ -7,3 +7,4 @@ local.properties
 .DS_Store
 consumer-check/.gradle/
 consumer-check/build/
+build/test-repo/
