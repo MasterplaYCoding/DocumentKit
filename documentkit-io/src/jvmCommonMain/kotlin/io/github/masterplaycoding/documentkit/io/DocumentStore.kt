@@ -2,6 +2,7 @@ package io.github.masterplaycoding.documentkit.io
 
 import io.github.masterplaycoding.documentkit.AssetEntry
 import io.github.masterplaycoding.documentkit.AssetId
+import io.github.masterplaycoding.documentkit.DecodeFailure
 import io.github.masterplaycoding.documentkit.DecodeResult
 import io.github.masterplaycoding.documentkit.DocumentCodec
 import io.github.masterplaycoding.documentkit.DocumentError
@@ -131,10 +132,12 @@ public class DocumentStore(
             val body = verifyContent(archive, manifest, inventory.assets)
 
             val parsed = codec.parseBody(body).getOrElse { cause ->
+                // Raw-text parse failures are the worst offenders for leaking:
+                // kotlinx appends a slice of the input as "JSON input: {…}".
                 throw DocumentException(
                     DocumentError.InvalidJson(
                         DocumentKitFormat.DOCUMENT_ENTRY,
-                        cause.message ?: "malformed JSON",
+                        DecodeFailure.describe(cause, DocumentKitFormat.DOCUMENT_ENTRY),
                     ),
                 )
             }
@@ -188,10 +191,13 @@ public class DocumentStore(
         return try {
             manifestJson.decodeFromString(Manifest.serializer(), text)
         } catch (cause: Exception) {
+            // The manifest is less sensitive than the document body, but it
+            // still carries the application's document id, so it gets the same
+            // treatment rather than a special case.
             throw DocumentException(
                 DocumentError.InvalidJson(
                     DocumentKitFormat.MANIFEST_ENTRY,
-                    cause.message ?: "could not decode the manifest",
+                    DecodeFailure.describe(cause, DocumentKitFormat.MANIFEST_ENTRY),
                 ),
             )
         }

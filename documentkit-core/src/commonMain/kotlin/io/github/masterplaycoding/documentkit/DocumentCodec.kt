@@ -98,7 +98,7 @@ public class DocumentCodec<T : Any>(
             return DecodeResult.Failure(
                 DocumentError.InvalidJson(
                     DocumentKitFormat.DOCUMENT_ENTRY,
-                    cause.message ?: "could not decode the document model",
+                    DecodeFailure.describe(cause, DocumentKitFormat.DOCUMENT_ENTRY),
                 ),
             )
         }
@@ -115,6 +115,7 @@ public class DocumentCodec<T : Any>(
         json.parseToJsonElement(bytes.decodeToString()) as? JsonObject
             ?: error("document.json must contain a JSON object at the top level")
     }
+
 }
 
 /** Outcome of decoding a document body. */
