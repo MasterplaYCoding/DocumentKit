@@ -107,8 +107,8 @@ public class DocumentTransfer(
      * provider owns the destination and offers no replacement primitive, so an
      * interruption partway through leaves the destination partially written -
      * which is why [SaveReceipt.ProviderManagedExport] is a different receipt
-     * from [SaveReceipt.AtomicReplace], and why the sample offers "Save a
-     * copy" rather than advertising a crash-safe overwrite.
+     * from [SaveReceipt.AtomicReplace], and why an application should present
+     * this as "Save a copy" rather than as a crash-safe overwrite.
      */
     public suspend fun <T : Any> exportCopy(
         uri: Uri,

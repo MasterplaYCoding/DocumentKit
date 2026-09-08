@@ -31,7 +31,7 @@ public sealed class SaveReceipt {
      * copied out is always a valid archive. The copy itself is not atomic:
      * the provider owns the destination and does not offer replacement, so an
      * interruption mid-copy can leave the destination partially written. This
-     * is why the Android sample offers "Save a copy" rather than advertising
+     * is why an application should offer "Save a copy" rather than advertising
      * crash-safe overwrite.
      */
     public data class ProviderManagedExport(

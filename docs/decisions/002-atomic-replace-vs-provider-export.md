@@ -77,11 +77,11 @@ That is why this receipt is a different type. `AtomicReplace` and
 `ProviderManagedExport` both mean "it saved", and they mean materially
 different things about what happens when it does not.
 
-## Why the sample says "Save a copy"
+## Why an app should say "Save a copy"
 
-Because that is what the operation is. The Android sample offers export as
-*Save a copy* rather than *Save*, since advertising it as a crash-safe
-overwrite would be a claim the platform does not support.
+Because that is what the operation is. An application built on this should
+label provider export *Save a copy* rather than *Save*, since advertising it as
+a crash-safe overwrite would be a claim the platform does not support.
 
 An app that wants overwrite semantics on Android should keep its working
 document in private storage — where atomic replacement genuinely is available —

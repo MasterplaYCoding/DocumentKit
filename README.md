@@ -8,46 +8,169 @@ binary assets, integrity checks, a way to open last year's file, and a save that
 does not destroy the previous version when it fails. DocumentKit is that layer,
 extracted from a real editor and made general.
 
-> **Status: pre-release, working toward `0.1`.** Everything below is implemented
-> and tested. Anything not below is not built yet; see [Roadmap](#roadmap).
+> **Status: pre-release, working toward `0.1.0`.** The library and its format
+> are implemented and covered by tests on Linux, Windows and macOS. Not yet
+> published to Maven Central — see [Getting started](#getting-started) for how
+> to consume it today. `documentkit-android` is verified by an independent
+> Android consumer build; it has no instrumented tests yet. Anything not
+> documented below is not built; see [Roadmap](#roadmap).
+
+---
+
+## Getting started
+
+**Which module?** Depend on one; the others come with it.
+
+| Depend on | When |
+|---|---|
+| `documentkit-io` | Desktop or server JVM. Brings in `documentkit-core`. |
+| `documentkit-android` | Android. Brings in both of the above. |
+| `documentkit-core` | Only if you are writing your own I/O layer and want the format types, codec and migrations alone. |
+
+**Not yet on Maven Central.** Until it is, build and consume it locally:
+
+```bash
+git clone https://github.com/MasterplaYCoding/DocumentKit.git
+cd DocumentKit && ./gradlew publishToMavenLocal
+```
+
+`settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        google()          // only if you are building for Android
+    }
+}
+```
+
+`build.gradle.kts`:
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.2.0"
+    // Required. Your document model is @Serializable, and a library cannot
+    // supply a compiler plugin on your behalf.
+    kotlin("plugin.serialization") version "2.2.0"
+}
+
+dependencies {
+    implementation("io.github.masterplaycoding.documentkit:documentkit-io:0.1.0-SNAPSHOT")
+}
+```
+
+You do **not** need to declare `kotlinx-coroutines` or
+`kotlinx-serialization-json` yourself — both arrive transitively, and
+[`consumer-check/`](consumer-check) is a separate build that fails if they ever
+stop doing so.
+
+**Requirements:** JDK 17, Kotlin 2.2.0, Android API 24+ (compiled against
+SDK 36).
+
+> **Every I/O entry point is a `suspend` function** and runs on
+> `Dispatchers.IO`. The snippets below use `runBlocking` to stay short; in an
+> application, call them from whatever scope you already have.
 
 ---
 
 ## Saving a document
 
 ```kotlin
+import io.github.masterplaycoding.documentkit.AssetId
+import io.github.masterplaycoding.documentkit.DocumentCodec
+import io.github.masterplaycoding.documentkit.io.AssetSource
+import io.github.masterplaycoding.documentkit.io.DocumentStore
+import io.github.masterplaycoding.documentkit.io.SaveReceipt
+import java.io.File
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+
 @Serializable
 data class Notebook(val title: String, val notes: List<Note> = emptyList())
+
+@Serializable
+data class Note(val text: String, val imageAssetId: String? = null)
+
+val codec = DocumentCodec(
+    applicationId = "example.notebook",
+    schemaVersion = 1,
+    serializer = Notebook.serializer(),
+    referencedAssets = { notebook ->
+        notebook.notes.mapNotNull { note -> note.imageAssetId?.let(AssetId::of) }.toSet()
+    },
+    validate = { notebook ->
+        if (notebook.title.isBlank()) "a notebook needs a title" else null
+    },
+)
+
+fun main() = runBlocking {
+    val store = DocumentStore()
+    val directory = File(System.getProperty("user.home"), "Documents")
+    val coverImage = File(directory, "cover.png")
+
+    val notebook = Notebook(
+        title = "Field notes",
+        notes = listOf(Note("first"), Note("with a picture", imageAssetId = "cover")),
+    )
+
+    val receipt = store.save(
+        destination = File(directory, "field-notes.dkit"),
+        document = notebook,
+        documentId = "9c1f-4a2e-…",          // yours; stable across saves
+        codec = codec,
+        assets = mapOf(AssetId.of("cover") to AssetSource.ofFile(coverImage)),
+    )
+
+    check(receipt is SaveReceipt.AtomicReplace)
+}
+```
+
+## Opening one
+
+```kotlin
+val documentFile = File(directory, "field-notes.dkit")
+
+store.open(documentFile, codec).use { opened ->
+    println(opened.document.title)
+    println(opened.migrationsApplied)   // e.g. ["notes-become-objects"]
+
+    opened.copyAssetTo(AssetId.of("cover"), File(directory, "extracted-cover.png"))
+}
+```
+
+`use { }` matters: the handle owns the open archive, and on Android any staging
+copy, until it is closed.
+
+## Opening an older one
+
+Add a migration per schema version you have ever shipped, and raise
+`schemaVersion` to match:
+
+```kotlin
+import io.github.masterplaycoding.documentkit.documentMigration
+import kotlinx.serialization.json.*
+
+// Version 1 stored notes as bare strings; version 2 stores objects, so a note
+// can carry an image.
+val notesBecomeObjects = documentMigration("notes-become-objects", fromVersion = 1) { document ->
+    buildJsonObject {
+        put("title", document["title"] ?: JsonPrimitive("Untitled"))
+        putJsonArray("notes") {
+            document["notes"]?.jsonArray?.forEach { note ->
+                add(buildJsonObject { put("text", note.jsonPrimitive.content) })
+            }
+        }
+    }
+}
 
 val codec = DocumentCodec(
     applicationId = "example.notebook",
     schemaVersion = 2,
     serializer = Notebook.serializer(),
     migrations = listOf(notesBecomeObjects),
-    referencedAssets = { it.notes.mapNotNull { note -> note.imageAssetId?.let(AssetId::of) }.toSet() },
-    validate = { if (it.title.isBlank()) "a notebook needs a title" else null },
 )
-
-val store = DocumentStore()
-
-val receipt = store.save(
-    destination = File(directory, "field-notes.dkit"),
-    document = notebook,
-    documentId = "9c1f-…",
-    codec = codec,
-    assets = mapOf(AssetId.of("cover") to AssetSource.ofFile(coverImage)),
-)
-// receipt is SaveReceipt.AtomicReplace
-```
-
-## Opening one, including an old one
-
-```kotlin
-store.open(file, codec).use { opened ->
-    println(opened.document.title)
-    println(opened.migrationsApplied)   // ["notes-become-objects"] for a v1 file
-    opened.copyAssetTo(AssetId.of("cover"), destination)
-}
 ```
 
 Opening a version-1 file migrates it **in memory**. The file on disk is not
@@ -57,11 +180,14 @@ decision a library gets to make. Saving is what writes.
 ## Opening a damaged one
 
 ```kotlin
-try {
-    store.open(suspiciousFile, codec).use { /* … */ }
+import io.github.masterplaycoding.documentkit.DocumentError
+import io.github.masterplaycoding.documentkit.DocumentException
+
+val message = try {
+    store.open(suspiciousFile, codec).use { opened -> opened.document.title }
 } catch (failure: DocumentException) {
     when (val error = failure.error) {
-        is DocumentError.IntegrityMismatch -> "‘${error.entry}’ does not match its digest"
+        is DocumentError.IntegrityMismatch -> "'${error.entry}' does not match its digest"
         is DocumentError.UnsupportedSchema -> "written by a newer version of this app"
         is DocumentError.MissingMigration  -> "too old for this build to read"
         else -> error.detail
@@ -71,7 +197,26 @@ try {
 
 Errors are structured and name the entry or migration step involved. They do
 not carry document contents: an error message ends up in a log or a bug report,
-and the user's document is theirs.
+and the user's document is theirs. That is enforced by tests that plant a
+sentinel value in a document and assert it appears in no error, message or
+stack trace.
+
+## Android
+
+```kotlin
+import io.github.masterplaycoding.documentkit.android.DocumentTransfer
+
+val transfer = DocumentTransfer(context)
+
+// A Uri you already obtained from the Storage Access Framework. This library
+// does not request permissions or launch pickers — those are your UI.
+transfer.import(uri, codec).use { opened -> render(opened.document) }
+
+val receipt = transfer.exportCopy(uri, notebook, documentId, codec, assets)
+```
+
+Export returns `ProviderManagedExport`, not `AtomicReplace`, and the difference
+is real — see [the write-up](docs/decisions/002-atomic-replace-vs-provider-export.md).
 
 ---
 
@@ -99,13 +244,6 @@ and the user's document is theirs.
 The archive implementation lives in one intermediate source set compiled for
 both JVM and Android. Two copies is how they drift.
 
-## Requirements
-
-- Kotlin 2.2.0, JDK 17 toolchain.
-- JVM desktop: Windows, Linux, macOS.
-- Android API 24+, compiled against SDK 36.
-- `kotlinx.serialization` 1.9.0 and `kotlinx.coroutines` 1.10.2.
-
 Nothing depends on Compose. A codec is constructible from a plain serialisable
 model, which is what lets the same document type serve a desktop app, an
 Android app, a CLI and a test.
@@ -114,14 +252,15 @@ Android app, a CLI and a test.
 
 | Milestone | Contents | State |
 |---|---|---|
-| `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
-| `0.2` | Inspect/validate CLI, integrity reporting, Android instrumented tests at API 24 and 36 | planned |
-| `0.3` | Lantr legacy importer, expanded malformed-input corpus, benchmarks | planned |
-| `1.0` | Stable API and format, compatibility policy, fuzz regressions, Maven Central publication | planned |
+| `0.1.0` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export, Maven Central publication | in progress |
+| `0.2` | Inspect/validate CLI, integrity reporting | planned |
+| `0.3` | Lantr legacy importer, Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
+| `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
 
 ## Documentation
 
 - [Container format, version 1](docs/format-v1.md) — the normative specification.
+- [Troubleshooting](docs/troubleshooting.md) — what each structured error means and what to do.
 - [Extracting a reusable persistence layer from Lantr](docs/decisions/001-extraction-from-lantr.md)
 - [Atomic replacement versus Android provider export](docs/decisions/002-atomic-replace-vs-provider-export.md)
 - [Validating archive contents without trusting size metadata](docs/decisions/003-untrusted-size-metadata.md)
