@@ -66,14 +66,26 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Publish to the local repository
-        run: ./gradlew publishToMavenLocal --stacktrace
+      # Publishes to build/test-repo and asserts every expected coordinate is
+      # present. A module whose publication stops being registered fails here
+      # rather than going quietly missing from the release.
+      - name: Publish and verify every expected coordinate
+        run: ./gradlew verifyPublishedCoordinates --stacktrace
 
       # The real gate. Building inside the workspace proves the code compiles;
       # it says nothing about whether the published artifacts are usable.
       # Gradle metadata, target variants, the api/implementation split and
       # transitive dependencies are invisible until something resolves them
       # from an independent build.
-      - name: Resolve and run the independent consumer
+      - name: Resolve and run the independent JVM consumer
         working-directory: consumer-check
         run: ./gradlew run --stacktrace
+
+      # A JVM consumer cannot resolve an AAR, so the job above is structurally
+      # incapable of noticing an Android packaging failure - which is exactly
+      # how documentkit-android came to publish no artifact at all while CI
+      # stayed green. Only a build with the Android plugin applied can prove
+      # that module resolves and exposes the API it claims to.
+      - name: Resolve documentkit-android from an independent Android consumer
+        working-directory: consumer-check-android
+        run: ./gradlew assembleDebug --stacktrace

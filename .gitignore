@@ -8,3 +8,6 @@ local.properties
 consumer-check/.gradle/
 consumer-check/build/
 build/test-repo/
+consumer-check-android/.gradle/
+consumer-check-android/build/
+consumer-check-android/local.properties
