@@ -64,16 +64,12 @@ on your approval and the signing key is not readable by every workflow.
 
 ## Releasing
 
-1. Set the version in `gradle.properties`:
+`0.2.0` is already prepared. `VERSION_NAME`, the changelog section, the
+README's coordinates and both consumer builds are at it, and everything below
+except the tag has been run. What is left is the part that cannot be done
+without an account.
 
-   ```properties
-   VERSION_NAME=0.1.0
-   ```
-
-2. Add a `## [0.1.0] - YYYY-MM-DD` section to `CHANGELOG.md`. The release
-   workflow refuses to publish without one.
-
-3. Verify locally, the same way CI will:
+1. Verify locally, the same way CI will:
 
    ```bash
    ./gradlew build verifyPublishedCoordinates
@@ -87,26 +83,42 @@ on your approval and the signing key is not readable by every workflow.
    cd consumer-check-android && ./gradlew assembleDebug
    ```
 
-4. Commit, then tag and push:
+2. Make the two claims that are only true on the day true:
+
+   - replace `unreleased` on the `## [0.2.0]` heading in `CHANGELOG.md` with
+     the date;
+   - in `README.md`, delete the *Why `mavenLocal()` and not `mavenCentral()`?*
+     section and remove `mavenLocal()` from the `repositories` block above it.
+
+   Commit both.
+
+3. Tag and push:
 
    ```bash
-   git tag v0.1.0 && git push origin main v0.1.0
+   git tag v0.2.0 && git push origin main v0.2.0
    ```
 
-5. The `Release` workflow checks that the tag matches `VERSION_NAME`, that the
+4. The `Release` workflow checks that the tag matches `VERSION_NAME`, that the
    version is not a `SNAPSHOT`, and that the changelog has a matching section;
    then it runs the tests and both consumer builds; then it publishes.
 
-6. Central holds the upload in a validation state. Log in to
+5. Central holds the upload in a validation state. Log in to
    [central.sonatype.com](https://central.sonatype.com), check the deployment,
    and release it. Artifacts appear on `mavenCentral()` within an hour or so.
 
-7. Set `VERSION_NAME` to the next `-SNAPSHOT` and commit.
+6. Confirm from outside: in a scratch directory, resolve
+   `io.github.masterplaycoding.documentkit:documentkit-io:0.2.0` from
+   `mavenCentral()` alone. The consumer builds prove the artifacts are correct;
+   only this proves they are reachable.
 
-## After the first release
+7. Set `VERSION_NAME` to the next `-SNAPSHOT` and commit. Leave the README at
+   the released version — it advertises what a user can actually depend on, not
+   what the working tree is building.
 
-Update `README.md` to drop the local-build instructions and give the plain
-coordinates, and change the roadmap row from *in progress* to *released*.
+## Subsequent releases
+
+Steps 1-7 with the new version substituted, plus the two edits step 2 no longer
+covers: the coordinates in `README.md`, and the roadmap row in it.
 
 ## What is deliberately not automated
 

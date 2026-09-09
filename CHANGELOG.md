@@ -5,10 +5,10 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
-## [Unreleased]
+## [0.2.0] - unreleased
 
-Working toward `0.2.0`, the first published release. See
-[RELEASING.md](RELEASING.md) for what publishing requires.
+Prepared in full; the date becomes real on the day it is tagged. Publishing
+needs credentials no repository should hold - see [RELEASING.md](RELEASING.md).
 
 ### Fixed
 

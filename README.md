@@ -56,7 +56,7 @@ plugins {
 }
 
 dependencies {
-    implementation("io.github.masterplaycoding.documentkit:documentkit-io:0.1.0-SNAPSHOT")
+    implementation("io.github.masterplaycoding.documentkit:documentkit-io:0.2.0")
 }
 ```
 
@@ -77,8 +77,9 @@ of claim this project spends a lot of words avoiding.
 The publishing pipeline is built and tested — see [RELEASING.md](RELEASING.md)
 and [`.github/workflows/release.yml`](.github/workflows/release.yml), which
 gates a publish on the same coordinate verification and consumer builds CI
-runs. It is deliberately held until the `0.2` API settles, since a Central
-version is permanently immutable.
+runs. `0.2.0` is prepared and every check it will face passes; what is left is
+a Central Portal account, a verified namespace and a signing key, none of which
+belong in a repository.
 
 The group id `io.github.masterplaycoding.documentkit` is already the one
 Central will verify, so the coordinates above will not change when it lands —
