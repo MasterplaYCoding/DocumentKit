@@ -16,6 +16,20 @@ allprojects {
 /** Where verifyPublishedCoordinates publishes to and then reads back. */
 val testRepository: Provider<Directory> = layout.buildDirectory.dir("test-repo")
 
+/**
+ * Empties that repository before anything publishes into it.
+ *
+ * Without this it accumulates every version ever built, which reintroduces the
+ * exact failure mavenLocal was rejected for. A stale 0.1.0-SNAPSHOT sitting
+ * beside a fresh 0.2.0 is not inert: anything still resolving the old
+ * coordinates keeps succeeding against artifacts this build did not produce,
+ * and reports success for a check that verified nothing.
+ */
+val clearLocalTestRepo by tasks.registering(Delete::class) {
+    description = "Removes the build-local repository so it holds only the current output."
+    delete(testRepository)
+}
+
 // Publishing metadata is applied uniformly, so an artifact resolved from a
 // repository carries the same identity as one built here.
 subprojects {
@@ -80,6 +94,13 @@ subprojects {
                 }
             }
         }
+    }
+
+    // Publishing into a directory that is wiped first has to wait for the wipe.
+    // A dependency rather than an ordering rule: every publication needs it, and
+    // Gradle runs it once however many modules ask.
+    tasks.matching { it.name.endsWith("ToLocalTestRepoRepository") }.configureEach {
+        dependsOn(clearLocalTestRepo)
     }
 }
 
