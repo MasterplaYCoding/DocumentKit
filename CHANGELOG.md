@@ -36,6 +36,11 @@ Working toward `0.2.0`, the first published release. See
   neither claims more than it checked: validation covers container structure
   and integrity, and says in its own output that the application schema was
   not examined.
+- **Real API documentation.** Dokka 2.2 generates the javadoc jars, which were
+  previously empty stubs because AGP 8.9 bundles a Dokka that crashes on
+  Kotlin 2.2 sources. `verifyPublishedCoordinates` now also rejects a jar that
+  is present but empty - the stub satisfied a presence-only check while giving
+  consumers nothing.
 - `DocumentStore.inspect` and `DocumentStore.validate`: codec-free reading of
   what a container declares, and a full integrity check that collects every
   problem rather than stopping at the first.
@@ -85,9 +90,7 @@ Working toward `0.2.0`, the first published release. See
 
 ### Not yet implemented
 
-Real API documentation (AGP's bundled Dokka
-crashes on Kotlin 2.2, so javadoc jars are empty stubs for now), the Lantr
-legacy importer, benchmarks, and fuzzing.
+The Lantr legacy importer, benchmarks, and fuzzing.
 
 `documentkit-android` has no *instrumented* tests. Every entry point takes a
 `Context` or a `Uri`, so coverage at API 24 and 36 needs an emulator and is

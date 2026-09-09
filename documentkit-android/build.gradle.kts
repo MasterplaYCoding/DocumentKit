@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.mavenPublish)
+    alias(libs.plugins.dokka)
     alias(libs.plugins.kotlinAndroid)
 }
 
@@ -32,9 +33,10 @@ kotlin {
 }
 
 mavenPublishing {
-    // AGP's built-in javadoc task runs a bundled Dokka that crashes on Kotlin
-    // 2.2 sources - it still uses the compiler's removed descriptor API - so
-    // AGP's javadoc generation is switched off and replaced by the stub below.
+    // publishJavadocJar = false, because turning it on makes AGP register its
+    // own JavaDocGenerationTask - which runs a Dokka bundled with AGP 8.9 that
+    // crashes on Kotlin 2.2 sources, since it still uses the compiler's removed
+    // descriptor API. The jar below is built from a current Dokka instead.
     configure(
         com.vanniktech.maven.publish.AndroidSingleVariantLibrary(
             variant = "release",
@@ -45,23 +47,21 @@ mavenPublishing {
 }
 
 /**
- * An empty javadoc jar.
+ * The javadoc jar, built from Dokka's HTML output.
  *
- * Maven Central requires the artifact to be present; it does not require it to
- * have content, and the KMP modules publish an equally empty one that the
- * publishing plugin generates for them. This keeps all three modules'
- * published shapes identical rather than leaving one silently short an
- * artifact - which is the class of mistake this module has already made once.
- *
- * Real API documentation is 0.2 work, tracked with the Dokka wiring.
+ * The KMP modules get theirs from the publishing plugin automatically; this
+ * module needs it wired by hand for the reason above. It contains real
+ * documentation rather than the empty stub it briefly shipped, so a consumer's
+ * IDE has something to show.
  */
-val androidJavadocJar by tasks.registering(Jar::class) {
+val dokkaJavadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
+    from(tasks.named("dokkaGeneratePublicationHtml"))
 }
 
 afterEvaluate {
     publishing.publications.withType<MavenPublication>().configureEach {
-        artifact(androidJavadocJar)
+        artifact(dokkaJavadocJar)
     }
 }
 

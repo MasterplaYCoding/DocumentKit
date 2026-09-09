@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.mavenPublish) apply false
+    alias(libs.plugins.dokka) apply false
 }
 
 allprojects {
@@ -102,6 +103,9 @@ val expectedArtifacts = listOf(
     "documentkit-cli",
 )
 
+/** Below this, a jar holds no files worth publishing. An empty one is ~22 bytes. */
+val minJarBytes = 512L
+
 // Captured outside the task block on purpose. Inside tasks.register the
 // receiver is the Task, where `group` is the task's own group ("verification"),
 // so reading it there silently looks for artifacts under the wrong path.
@@ -118,6 +122,7 @@ tasks.register("verifyPublishedCoordinates") {
     val groupPath = publishedGroupPath
     val releaseVersion = publishedVersion
     val expected = expectedArtifacts
+    val minimumJarBytes = minJarBytes
 
     doLast {
         val root = repositoryDirectory.get().asFile
@@ -138,12 +143,22 @@ tasks.register("verifyPublishedCoordinates") {
             // (documentkit-io-0.1.0-20260908.085936-1.pom), while a release
             // version keeps the plain form.
             for (suffix in listOf("pom", "module", "-sources.jar", "-javadoc.jar")) {
-                val found = published.any {
+                val match = published.firstOrNull {
                     it.startsWith("$artifact-") &&
                         it.endsWith(if (suffix.startsWith("-")) suffix else ".$suffix")
                 }
-                if (!found) {
+                if (match == null) {
                     missing += "$artifact/$releaseVersion/$artifact-*$suffix"
+                    continue
+                }
+
+                // Presence is not enough for the jars. This module published an
+                // *empty* javadoc jar for a while, which satisfied a
+                // presence-only check while giving consumers' IDEs nothing at
+                // all. An empty jar is about 22 bytes; anything real is orders
+                // of magnitude larger.
+                if (suffix.endsWith(".jar") && File(directory, match).length() < minimumJarBytes) {
+                    missing += "$artifact/$releaseVersion/$match (present but empty)"
                 }
             }
         }
