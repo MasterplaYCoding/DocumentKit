@@ -1,3 +1,5 @@
+import java.util.Properties
+
 /**
  * An independent Android build that consumes DocumentKit the way a real
  * application would: by coordinates, from a repository, with no reference to
@@ -45,8 +47,21 @@ android {
     sourceSets["main"].java.srcDir("src/main/kotlin")
 }
 
+/**
+ * The version under test is whatever the library build is currently producing.
+ *
+ * Hard-coding it was a trap: the build-local repository holds exactly the
+ * version the last publish produced, so a bump in gradle.properties turns this
+ * consumer into a check of an artifact that is no longer there. It resolved
+ * only for as long as the two happened to agree, and would have failed the
+ * release workflow at the first version that was not 0.1.0-SNAPSHOT.
+ */
+val documentKitVersion: String = Properties().apply {
+    file("../gradle.properties").inputStream().use { load(it) }
+}.getProperty("VERSION_NAME")
+
 dependencies {
-    implementation("io.github.masterplaycoding.documentkit:documentkit-android:0.1.0-SNAPSHOT")
+    implementation("io.github.masterplaycoding.documentkit:documentkit-android:$documentKitVersion")
     // Note what is absent: kotlinx-coroutines and kotlinx-serialization. Both
     // must arrive transitively through the library's own api dependencies. If
     // either is declared as implementation upstream, this build stops
