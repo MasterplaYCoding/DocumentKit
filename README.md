@@ -244,8 +244,10 @@ is real — see [the write-up](docs/decisions/002-atomic-replace-vs-provider-exp
 ./gradlew :documentkit-cli:installDist
 ```
 
+That puts a launcher script under the build directory; it is not on your `PATH`:
+
 ```bash
-documentkit inspect field-notes.dkit
+documentkit-cli/build/install/documentkit/bin/documentkit inspect field-notes.dkit
 ```
 
 ```
