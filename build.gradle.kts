@@ -103,6 +103,14 @@ val expectedArtifacts = listOf(
     "documentkit-cli",
 )
 
+/** The modules a release contains. Samples are not among them, by design. */
+val publishableModules = listOf(
+    ":documentkit-core",
+    ":documentkit-io",
+    ":documentkit-android",
+    ":documentkit-cli",
+)
+
 /** Below this, a jar holds no files worth publishing. An empty one is ~22 bytes. */
 val minJarBytes = 512L
 
@@ -116,7 +124,14 @@ tasks.register("verifyPublishedCoordinates") {
     group = "verification"
     description = "Fails if any expected artifact is absent from the build-local repository."
 
-    dependsOn(subprojects.map { "${it.path}:publishAllPublicationsToLocalTestRepoRepository" })
+    // Spelled out rather than derived from subprojects, for the same reason
+    // expectedArtifacts is: what a release contains should be a statement, not
+    // a consequence. It also keeps the samples out, which are deliberately
+    // unpublished, and skips the :samples container project, which has no
+    // publishing task at all.
+    dependsOn(
+        publishableModules.map { "$it:publishAllPublicationsToLocalTestRepoRepository" },
+    )
 
     val repositoryDirectory = testRepository
     val groupPath = publishedGroupPath

@@ -304,6 +304,12 @@ CLI verifies the container and says so in as many words.
 | `documentkit-android` | Storage Access Framework import and export. |
 | `documentkit-cli` | `inspect` and `validate` for any container. |
 
+Not published, and not part of the supported surface:
+
+| Sample | What it is |
+|---|---|
+| [`samples/lantr-import`](samples/lantr-import) | Converts a Lantr `.ltrn` presentation into a DocumentKit container, and reports everything it did not carry across. |
+
 The archive implementation lives in one intermediate source set compiled for
 both JVM and Android. Two copies is how they drift.
 
@@ -316,8 +322,8 @@ Android app, a CLI and a test.
 | Milestone | Contents | State |
 |---|---|---|
 | `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
-| `0.2` | Inspect/validate CLI, integrity reporting | **implemented**, release pending |
-| `0.3` | Lantr legacy importer, Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
+| `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **implemented**, release pending |
+| `0.3` | Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
 
 ## Documentation

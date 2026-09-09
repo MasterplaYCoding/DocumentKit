@@ -31,6 +31,12 @@ Working toward `0.2.0`, the first published release. See
 
 ### Added
 
+- **`samples/lantr-import`**: reads a Lantr `.ltrn` archive and writes a
+  DocumentKit container. Not published and not part of the supported surface -
+  it exists so the extraction PROVENANCE.md describes is executable rather than
+  asserted. It reports every piece of source content it did not carry across,
+  by name and location.
+
 - **`documentkit-cli`**, with `inspect` and `validate`. Works on a container
   belonging to any application, because neither command needs a codec - and
   neither claims more than it checked: validation covers container structure
@@ -90,7 +96,7 @@ Working toward `0.2.0`, the first published release. See
 
 ### Not yet implemented
 
-The Lantr legacy importer, benchmarks, and fuzzing.
+Benchmarks and fuzzing.
 
 `documentkit-android` has no *instrumented* tests. Every entry point takes a
 `Context` or a `Uri`, so coverage at API 24 and 36 needs an emulator and is
