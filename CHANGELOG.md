@@ -9,6 +9,29 @@ change without a `container_version` bump and a migration note.
 
 ### Added
 
+- **A memory ceiling test.** The README has always said an asset costs a buffer
+  rather than its own size in heap — it is why `AssetSource` is a stream
+  factory, why the reader streams entries, and why limits count streamed bytes.
+  Nothing verified it, and every existing test uses assets small enough to
+  buffer without anyone noticing, so a single well-meaning `readBytes()` in the
+  wrong place would have removed the property with a green suite.
+
+  `memoryCeilingTest` saves, reads and validates a **512 MiB** asset in a JVM
+  given a **192 MiB** heap. It measures nothing: if any stage materialises the
+  asset the run dies with an `OutOfMemoryError`, which is a clearer signal than
+  a number that drifted. A separate Gradle task because the heap is the
+  assertion — under `jvmTest`'s default heap the same test passes whether the
+  library streams or buffers, which would be worse than having no test at all.
+
+  Verified falsifiable: swapping the streaming drain for `readAsset` fails it
+  with `OutOfMemoryError` on the read, while the save half still passes, which
+  independently confirms the write path streams. It runs on all six CI test
+  jobs and gates a release.
+
+  Nothing large touches the disk. The bytes are generated on demand and are
+  repetitive, so deflate keeps the archive under a megabyte; only the stream is
+  large.
+
 - `AssetSourceTest`: the contract that openStream is called **twice** per save,
   once to measure and once to write, which nothing in the type signature says
   and which a one-shot source satisfies at compile time. The save already

@@ -33,6 +33,12 @@ jobs:
       - name: JVM tests
         run: ./gradlew :documentkit-core:jvmTest :documentkit-io:jvmTest :documentkit-cli:test :samples:lantr-import:test --stacktrace
 
+      # A separate invocation because the heap is the assertion: this task
+      # launches a JVM with less memory than the asset it streams, so a stage
+      # that buffers dies rather than passing quietly.
+      - name: Memory ceiling
+        run: ./gradlew :documentkit-io:memoryCeilingTest --stacktrace
+
   android:
     name: android build
     runs-on: ubuntu-latest
