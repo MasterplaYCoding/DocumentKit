@@ -186,11 +186,18 @@ val message = try {
 }
 ```
 
-Errors are structured and name the entry or migration step involved. They do
-not carry document contents: an error message ends up in a log or a bug report,
-and the user's document is theirs. That is enforced by tests that plant a
-sentinel value in a document and assert it appears in no error, message or
-stack trace.
+Errors are structured and name the entry or migration step involved. **Nothing
+DocumentKit writes carries document contents** — an error message ends up in a
+log or a bug report, and the user's document is theirs. That is enforced by
+tests that plant a sentinel value in a document and assert it appears in no
+error, message or stack trace.
+
+The one thing passed through unchanged is a **migration's own exception
+message**. If your migration throws `error("cannot convert note '$title'")`,
+that title reaches `MigrationFailed.reason` verbatim, because the text is
+yours, about your document, and replacing it with a placeholder would discard
+the only detail saying why the step failed. It is your call what goes in it —
+and worth remembering before pasting a migration failure into a public issue.
 
 ## Android
 
@@ -265,6 +272,7 @@ CLI verifies the container and says so in as many words.
 | A local save replaces the destination **atomically**, or fails with `AtomicReplaceUnsupported`. There is no silent fallback to a copy. | Atomic *visibility* on that filesystem. Not power-loss durability, not directory metadata (Java has no portable directory fsync), and nothing about network filesystems. |
 | An interrupted save leaves the previous document byte-for-byte unchanged. | Until the atomic move. After it commits, the save succeeded, even if cancellation arrived during the commit. |
 | Opening verifies every declared byte against its length and SHA-256 before returning. | Digests detect corruption and mismatched content. They do **not** authenticate an author: whoever rewrites content can rewrite the manifest. |
+| No error DocumentKit writes contains document content - enforced by tests that plant a sentinel value and assert it reaches no message or stack trace. | A migration you wrote is passed through verbatim, content and all. That text is yours; what goes in it is your decision, not the library's. |
 | Limits bound bytes actually streamed, so a decompression bomb costs the limit rather than the bomb. | Limits are configurable, and a writer applies the same ones as its reader — so raising them on one side alone produces files that will not reopen. |
 | Assets stream in both directions; nothing buffers a whole archive. | An `AssetSource` is read twice per save (measure, then write). It must return a fresh stream each time. |
 | An opened document owns its resources and releases them on `close`. | One handle is not safe for concurrent use. Independent handles on the same file are fine. |

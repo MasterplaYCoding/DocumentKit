@@ -7,7 +7,25 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **The privacy claim was broader than the guarantee.** The README said errors
+  "do not carry document contents" and named migration steps in the same
+  sentence, while `MigrationChain` passes a migration's own exception message
+  through verbatim — and this repository's own test already asserted that it
+  does. Someone reading the claim would reasonably paste a migration failure
+  into a public issue. The wording now separates the half DocumentKit
+  guarantees from the half the application controls, and the guarantees table
+  carries the same boundary.
+
+### Added
+
+- Migration privacy tests: one showing a migration's message reaching
+  `MigrationFailed.reason` with document content in it, one showing that the
+  failures DocumentKit words itself — a gap in the chain, a document from the
+  future — contain nothing from the document, and one covering an exception
+  with no message at all, which would otherwise produce an error that says a
+  step failed and nothing else.
 
 ## [0.3.0] - 2026-09-10
 
