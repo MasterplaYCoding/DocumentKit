@@ -92,8 +92,15 @@ public data class Manifest(
 
         // Overflow-safe summation: a manifest is untrusted input, and a set of
         // lengths that wraps Long would otherwise pass a naive total check.
-        var total = documentLength
+        //
+        // Negative lengths are skipped rather than summed. They are already
+        // reported above, and feeding one in here makes the guard itself
+        // overflow - Long.MAX_VALUE minus a negative wraps to Long.MIN_VALUE,
+        // so every total compares greater and the manifest is additionally
+        // accused of an overflow that never happened.
+        var total = documentLength.coerceAtLeast(0)
         for (asset in assets) {
+            if (asset.length < 0) continue
             if (total > Long.MAX_VALUE - asset.length) {
                 errors += DocumentError.InvalidManifest("declared lengths overflow")
                 break
@@ -104,8 +111,25 @@ public data class Manifest(
         return errors
     }
 
-    /** Total declared uncompressed size. Advisory only - readers count bytes. */
-    public fun declaredTotalLength(): Long = documentLength + assets.sumOf { it.length }
+    /**
+     * Total declared uncompressed size. Advisory only - readers count bytes.
+     *
+     * Saturates at [Long.MAX_VALUE] and ignores negative lengths, so a hostile
+     * manifest cannot make this return a small number. The naive sum wrapped:
+     * lengths adding past Long produced a value that would satisfy any check
+     * phrased as "the declared total is under N", which is the one job an
+     * advisory total has. Callers should still prefer [validate], which
+     * reports such a manifest as broken instead of quietly summing it.
+     */
+    public fun declaredTotalLength(): Long {
+        var total = documentLength.coerceAtLeast(0)
+        for (asset in assets) {
+            if (asset.length < 0) continue
+            if (total > Long.MAX_VALUE - asset.length) return Long.MAX_VALUE
+            total += asset.length
+        }
+        return total
+    }
 
     private fun isSha256(value: String): Boolean =
         value.length == 64 && value.all { it in '0'..'9' || it in 'a'..'f' }

@@ -7,8 +7,26 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
-Nothing yet. `0.3` is scoped in the README roadmap: Android instrumented
-tests at API 24 and 36, an expanded malformed-input corpus, and benchmarks.
+### Fixed
+
+- **The overflow guard on declared lengths overflowed.** A manifest with a
+  negative asset length made `Long.MAX_VALUE - length` wrap to
+  `Long.MIN_VALUE`, so every total compared greater and the file was
+  additionally accused of an overflow that had not happened. Over-reporting
+  rather than under-reporting, but the point of collecting every problem is
+  that each one is real.
+- **`Manifest.declaredTotalLength()` wrapped on hostile input.** The naive sum
+  turned lengths adding past `Long` into a small positive number - which
+  satisfies any check phrased as "the declared total is under N", the one job
+  an advisory total has. It now saturates and ignores negative lengths.
+
+### Added
+
+- **`ManifestValidationTest`**, covering every rejection `Manifest.validate()`
+  can make. Nothing referenced that function before: fifty lines standing
+  between a hostile manifest and the rest of the reader, indistinguishable
+  from a function returning an empty list, and passing every other test in the
+  repository either way. It is what found both fixes above.
 
 ## [0.2.0] - 2026-09-10
 
