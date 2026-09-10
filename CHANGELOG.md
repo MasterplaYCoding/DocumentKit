@@ -5,10 +5,7 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
-## [0.2.0] - unreleased
-
-Prepared in full; the date becomes real on the day it is tagged. Publishing
-needs credentials no repository should hold - see [RELEASING.md](RELEASING.md).
+## [0.2.0] - 2026-09-10
 
 ### Fixed
 

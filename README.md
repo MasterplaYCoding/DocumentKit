@@ -26,19 +26,11 @@ extracted from a real editor and made general.
 | `documentkit-android` | Android. Brings in both of the above. |
 | `documentkit-core` | Only if you are writing your own I/O layer and want the format types, codec and migrations alone. |
 
-Build it once into your local Maven repository:
-
-```bash
-git clone https://github.com/MasterplaYCoding/DocumentKit.git
-cd DocumentKit && ./gradlew publishToMavenLocal
-```
-
 `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
-        mavenLocal()
         mavenCentral()
         google()          // only if you are building for Android
     }
@@ -67,25 +59,6 @@ stop doing so.
 
 **Requirements:** JDK 17, Kotlin 2.2.0, Android API 24+ (compiled against
 SDK 36).
-
-<details>
-<summary>Why <code>mavenLocal()</code> and not <code>mavenCentral()</code>?</summary>
-
-Because it is not on Maven Central yet, and saying otherwise would be the kind
-of claim this project spends a lot of words avoiding.
-
-The publishing pipeline is built and tested — see [RELEASING.md](RELEASING.md)
-and [`.github/workflows/release.yml`](.github/workflows/release.yml), which
-gates a publish on the same coordinate verification and consumer builds CI
-runs. `0.2.0` is prepared and every check it will face passes; what is left is
-a Central Portal account, a verified namespace and a signing key, none of which
-belong in a repository.
-
-The group id `io.github.masterplaycoding.documentkit` is already the one
-Central will verify, so the coordinates above will not change when it lands —
-only the repository line.
-
-</details>
 
 > **Every I/O entry point is a `suspend` function** and runs on
 > `Dispatchers.IO`. The snippets below use `runBlocking` to stay short; in an
@@ -325,7 +298,7 @@ Android app, a CLI and a test.
 | Milestone | Contents | State |
 |---|---|---|
 | `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
-| `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **implemented**, release pending |
+| `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **released** |
 | `0.3` | Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
 
