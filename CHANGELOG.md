@@ -5,7 +5,9 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
-## [Unreleased]
+## [0.3.0] - unreleased
+
+The date becomes real on the day it is tagged; see [RELEASING.md](RELEASING.md).
 
 ### Fixed
 
@@ -52,6 +54,12 @@ change without a `container_version` bump and a migration note.
   reaches a user as a stack trace and an exit code nobody chose.
 - `DocumentSummaryTest`, exercising the saturating total directly - the route
   a caller takes when they build a summary rather than read one.
+- `FormatTest`, which pins that `isKnownEntry` is a shape filter rather than a
+  safety check. It returns true for `assets/../../escape.txt`, because the
+  prefix matches; what keeps such an entry out is that `assetPath` derives
+  every path from an already-validated `AssetId`, so a crafted name matches
+  nothing. The function's name invited the opposite assumption and its KDoc
+  encouraged it. Both now say filter.
 
 ## [0.2.0] - 2026-09-10
 

@@ -300,7 +300,8 @@ Android app, a CLI and a test.
 |---|---|---|
 | `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
 | `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **released** |
-| `0.3` | Android instrumented tests at API 24 and 36, expanded malformed-input corpus, benchmarks | planned |
+| `0.3` | Hostile-input hardening: manifest validation coverage, archive-level and command-line corpora, overflow fixes | **implemented**, release pending |
+| `0.4` | Android instrumented tests at API 24 and 36, benchmarks | planned |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
 
 ## Documentation
