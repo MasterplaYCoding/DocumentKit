@@ -5,6 +5,10 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
+## [Unreleased]
+
+Nothing yet.
+
 ## [0.3.0] - 2026-09-10
 
 ### Fixed
