@@ -268,6 +268,7 @@ CLI verifies the container and says so in as many words.
 | Limits bound bytes actually streamed, so a decompression bomb costs the limit rather than the bomb. | Limits are configurable, and a writer applies the same ones as its reader — so raising them on one side alone produces files that will not reopen. |
 | Assets stream in both directions; nothing buffers a whole archive. | An `AssetSource` is read twice per save (measure, then write). It must return a fresh stream each time. |
 | An opened document owns its resources and releases them on `close`. | One handle is not safe for concurrent use. Independent handles on the same file are fine. |
+| Reading is unaffected by bytes sitting before or after the archive: the content returned is the container's own, not a shifted misread of it. | DocumentKit does not certify that a file is *only* a container. A ZIP polyglot — a file that is simultaneously a valid container and a script or an image — opens as the document it holds. "Opened successfully" is not a statement that the file is inert. |
 | Migrations run through a complete, gap-free chain, validated when the codec is built. | Migrations transform JSON, one version per step, and never touch assets. Asset conversion is the application's job. |
 | Android export builds and verifies the archive privately before opening the destination. | The provider owns the destination. A `ProviderManagedExport` is a copy, not a crash-safe overwrite; an interruption mid-copy can leave partial content, and the error says so. |
 

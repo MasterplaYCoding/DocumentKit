@@ -27,6 +27,17 @@ change without a `container_version` bump and a migration note.
   between a hostile manifest and the rest of the reader, indistinguishable
   from a function returning an empty list, and passing every other test in the
   repository either way. It is what found both fixes above.
+- **Ten more containers in the malformed-input corpus**, at the archive level
+  rather than the manifest: an entirely empty but structurally valid ZIP, an
+  entry with no name, format entry names spelled in the wrong case, manifests
+  that parse as JSON but are not objects, a manifest carrying a byte order
+  mark, a manifest missing a required field, and both halves of the ZIP
+  polyglot pair - bytes before the archive and bytes after it. The library
+  already handled all ten; what they add is that it is now recorded, rather
+  than true by accident.
+- A row in the README's guarantees table for what the polyglot cases
+  established: reading is unaffected by bytes around the archive, and
+  DocumentKit does not certify that a file is *only* a container.
 
 ## [0.2.0] - 2026-09-10
 

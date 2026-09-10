@@ -355,4 +355,145 @@ class MalformedInputTest {
         // Dropping this quietly would lose the field on the next save.
         assertRejects<DocumentError.InvalidJson>(target)
     }
+
+    // --- archives that are structurally legal but not containers -----------
+
+    @Test
+    fun rejectsAValidArchiveWithNoEntriesAtAll() = runTest {
+        // A perfectly well-formed ZIP holding nothing. The reader has no
+        // manifest to consult and no entry to name, which is exactly the shape
+        // that tends to produce a null dereference rather than an error.
+        val target = RawZip().writeTo(file())
+
+        assertEquals(DocumentKitFormat.MANIFEST_ENTRY, assertRejects<DocumentError.MissingEntry>(target).entry)
+    }
+
+    @Test
+    fun rejectsAnEntryWhoseNameIsEmpty() = runTest {
+        val honest = """{"title":"Fixture","notes":[]}"""
+        val target = RawZip()
+            .entry(DocumentKitFormat.MANIFEST_ENTRY, manifestFor(honest))
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, honest)
+            .entry("", "payload")
+            .writeTo(file())
+
+        assertRejects<DocumentError.InvalidEntry>(target)
+    }
+
+    @Test
+    fun matchesFormatEntryNamesCaseSensitively() = runTest {
+        // MANIFEST.JSON is not manifest.json. A case-insensitive match would
+        // let a second, differently-cased copy sit beside the real one, and
+        // which of the two a reader honours would depend on its filesystem
+        // rather than on the file.
+        val honest = """{"title":"Fixture","notes":[]}"""
+        val target = RawZip()
+            .entry(DocumentKitFormat.MANIFEST_ENTRY, manifestFor(honest))
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, honest)
+            .entry("Document.json", """{"title":"Impostor","notes":[]}""")
+            .writeTo(file())
+
+        // Rejected as an unknown entry, not silently accepted as a duplicate
+        // of the real document.
+        assertEquals("Document.json", assertRejects<DocumentError.InvalidEntry>(target).entry)
+    }
+
+    @Test
+    fun rejectsAnAssetPrefixInTheWrongCase() = runTest {
+        val target = TestArchive.wellFormed(file()).entry("Assets/cover", "payload").build()
+
+        assertEquals("Assets/cover", assertRejects<DocumentError.InvalidEntry>(target).entry)
+    }
+
+    /**
+     * A DocumentKit container that is also some other file - a ZIP polyglot -
+     * still reads as the container it is.
+     *
+     * Both halves are pinned because the answer surprised me, and an
+     * unexamined "surprising but fine" is how a real hole gets waved through.
+     * Trailing bytes leave every offset correct. Leading bytes shift all of
+     * them, and the end-of-central-directory record is located by scanning
+     * backwards from the end, so a reader has to rebase - which java.util.zip
+     * does, in common with essentially every other ZIP implementation.
+     *
+     * That is acceptable here, and worth saying why rather than only that.
+     * The content read is the genuine content in both cases; DocumentKit never
+     * executes anything, and whether a file is executable is decided by its
+     * extension and permissions, not by what a library made of its bytes. What
+     * would matter is two readers disagreeing about the *content* of one file,
+     * and rebasing is what prevents that rather than causes it.
+     *
+     * The limit this leaves: DocumentKit does not certify that a container is
+     * *only* a container. An application that treats "opened successfully" as
+     * "this file is inert" is relying on something the library never promised.
+     */
+    @Test
+    fun readsAContainerWithBytesAppendedAfterIt() = runTest {
+        val target = TestArchive.wellFormed(file()).build()
+        val original = target.readBytes()
+        target.writeBytes(original + "TRAILING GARBAGE".toByteArray())
+
+        store.open(target, notebookCodec).use { opened ->
+            assertEquals("Fixture", opened.document.title)
+        }
+    }
+
+    @Test
+    fun readsAContainerWithBytesPrependedBeforeIt() = runTest {
+        val target = TestArchive.wellFormed(file()).build()
+        val original = target.readBytes()
+        target.writeBytes("#!/bin/sh\necho hello\n".toByteArray() + original)
+
+        // The real document, not a shifted misread of it.
+        store.open(target, notebookCodec).use { opened ->
+            assertEquals("Fixture", opened.document.title)
+            assertEquals(emptySet(), opened.assetIds)
+        }
+    }
+
+    // --- manifests that parse but are not manifests -------------------------
+
+    @Test
+    fun rejectsAManifestThatIsValidJsonButNotAnObject() = runTest {
+        for ((index, body) in listOf("[]", "\"manifest\"", "42", "true", "null").withIndex()) {
+            val target = TestArchive(file("shape-$index.dkit"))
+                .entry(DocumentKitFormat.MANIFEST_ENTRY, body)
+                .entry(DocumentKitFormat.DOCUMENT_ENTRY, "{}")
+                .build()
+
+            assertRejects<DocumentError.InvalidJson>(target)
+        }
+    }
+
+    @Test
+    fun rejectsAManifestCarryingAByteOrderMark() = runTest {
+        // A BOM is what a Windows text editor adds when someone repairs a
+        // container by hand. It must produce a named JSON error rather than a
+        // parser exception nobody can act on.
+        val honest = """{"title":"Fixture","notes":[]}"""
+        val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+        val target = TestArchive(file())
+            .entry(DocumentKitFormat.MANIFEST_ENTRY, bom + manifestFor(honest).toByteArray())
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, honest)
+            .build()
+
+        assertRejects<DocumentError.InvalidJson>(target)
+    }
+
+    @Test
+    fun rejectsAManifestMissingARequiredField() = runTest {
+        // Every field but document_sha256. kotlinx reports a missing required
+        // field, and the reader has to turn that into a document error rather
+        // than let a serialization exception escape.
+        val target = TestArchive(file())
+            .entry(
+                DocumentKitFormat.MANIFEST_ENTRY,
+                """{"container_version":1,"application_id":"example.notebook","schema_version":2,""" +
+                    """"document_id":"fixture-1","document_length":2,"assets":[]}""",
+            )
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, "{}")
+            .build()
+
+        assertRejects<DocumentError.InvalidJson>(target)
+    }
 }
