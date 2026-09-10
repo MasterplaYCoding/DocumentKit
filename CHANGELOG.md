@@ -9,6 +9,17 @@ change without a `container_version` bump and a migration note.
 
 ### Added
 
+- `OpenedDocumentResourcesTest`: the last guarantee row with no test behind it.
+  A leaked archive handle does not look like a leak - on Windows it locks the
+  file, so the symptom is a save that cannot replace the document the user is
+  editing, which is the entire lifecycle of an editor. Covers deleting after
+  close, saving over a document just read, the failure path through `use`,
+  fifty open/close cycles, two independent handles, closing twice, reading an
+  asset after close, and a failed open, which is where a handle is likeliest to
+  escape. Confirmed falsifiable: leaving one handle unclosed fails it on
+  Windows. On Linux every one of these passes with a leak, which is why it
+  matters that CI runs all three platforms.
+
 - **A memory ceiling test.** The README has always said an asset costs a buffer
   rather than its own size in heap — it is why `AssetSource` is a stream
   factory, why the reader streams entries, and why limits count streamed bytes.
