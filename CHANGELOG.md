@@ -9,6 +9,24 @@ change without a `container_version` bump and a migration note.
 
 ### Added
 
+- **The container specification is now machine-checked.**
+  `docs/format-v1.md` calls itself normative and was, until now, prose sitting
+  beside an unrelated implementation - accurate on the day it was written and
+  free to drift silently afterwards. `SpecificationConformanceTest` parses the
+  published limits table and asserts the build applies those exact numbers,
+  rather than restating them in Kotlin, which would only prove a copy matches
+  itself.
+
+  It also checks what a written container actually contains: exactly the three
+  documented entry kinds and no others, the serialised manifest field names
+  rather than the Kotlin property names - a dropped `@SerialName` renames a
+  field in every file the library has ever written and only a reader finds out -
+  and that no timestamp has crept in, which the specification rules out and
+  gives its reasons for.
+
+  Confirmed to catch drift: changing the entry-count default from 2,048 to
+  4,096 without touching the table fails it.
+
 - `OpenedDocumentResourcesTest`: the last guarantee row with no test behind it.
   A leaked archive handle does not look like a leak - on Windows it locks the
   file, so the symptom is a save that cannot replace the document the user is
