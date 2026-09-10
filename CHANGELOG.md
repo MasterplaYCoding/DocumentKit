@@ -5,9 +5,7 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
-## [0.3.0] - unreleased
-
-The date becomes real on the day it is tagged; see [RELEASING.md](RELEASING.md).
+## [0.3.0] - 2026-09-10
 
 ### Fixed
 
