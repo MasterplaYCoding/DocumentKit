@@ -7,6 +7,23 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
+### Added
+
+- `AssetSourceTest`: the contract that openStream is called **twice** per save,
+  once to measure and once to write, which nothing in the type signature says
+  and which a one-shot source satisfies at compile time. The save already
+  detects a source that cannot be read again and refuses rather than shipping a
+  container whose manifest describes bytes it does not contain - now pinned,
+  along with the properties that make that refusal safe: no destination file
+  created, no staging file left behind, and a previous document byte-identical
+  afterwards.
+- `DocumentEncodingTest`: `DocumentCodec.encode` had no test at all, despite
+  producing the bytes every saved document is made of. Covers the two
+  properties the format depends on - encoding is deterministic, so two saves of
+  identical content are identical files and the manifest digest means
+  something; and defaults are written out rather than omitted, so a build that
+  changes a default cannot silently reinterpret a document saved before it.
+
 ### Fixed
 
 - **The privacy claim was broader than the guarantee.** The README said errors
