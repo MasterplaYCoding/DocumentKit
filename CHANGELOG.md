@@ -15,10 +15,15 @@ change without a `container_version` bump and a migration note.
   additionally accused of an overflow that had not happened. Over-reporting
   rather than under-reporting, but the point of collecting every problem is
   that each one is real.
-- **`Manifest.declaredTotalLength()` wrapped on hostile input.** The naive sum
-  turned lengths adding past `Long` into a small positive number - which
-  satisfies any check phrased as "the declared total is under N", the one job
-  an advisory total has. It now saturates and ignores negative lengths.
+- **Two copies of the same wrapping sum.** `Manifest.declaredTotalLength()`
+  and `DocumentSummary.declaredContentBytes` each carried their own
+  `documentLength + assets.sumOf { it.length }`, and both turned lengths that
+  add past `Long` into a small - or negative - number, which satisfies any
+  check phrased as "the declared total is under N". That is the only thing an
+  advisory total is used for. There is now one implementation, saturating and
+  ignoring negative lengths, and both types call it. Neither was reachable with
+  an overflowing manifest through a reader - `DocumentStore` validates before
+  it summarises - but both types are public and constructible.
 
 ### Added
 
@@ -38,6 +43,15 @@ change without a `container_version` bump and a migration note.
 - A row in the README's guarantees table for what the polyglot cases
   established: reading is unaffected by bytes around the archive, and
   DocumentKit does not certify that a file is *only* a container.
+- **The hostile corpus, run through `documentkit-cli`.** Ten broken containers
+  as files on disk, asserting that `validate` calls each one invalid, that
+  `inspect` never answers with an invocation error, that every verdict carries
+  a reason, and that `--json` stays one parseable object. The library's own
+  tests prove each file is refused; none of them said what happens when the
+  refusal has to travel out through a command, where an escaping exception
+  reaches a user as a stack trace and an exit code nobody chose.
+- `DocumentSummaryTest`, exercising the saturating total directly - the route
+  a caller takes when they build a summary rather than read one.
 
 ## [0.2.0] - 2026-09-10
 

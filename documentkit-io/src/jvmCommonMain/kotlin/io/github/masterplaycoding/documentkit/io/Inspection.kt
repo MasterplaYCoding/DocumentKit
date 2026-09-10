@@ -3,6 +3,7 @@ package io.github.masterplaycoding.documentkit.io
 import io.github.masterplaycoding.documentkit.AssetEntry
 import io.github.masterplaycoding.documentkit.DocumentError
 import io.github.masterplaycoding.documentkit.DocumentKitFormat
+import io.github.masterplaycoding.documentkit.declaredTotalLength
 
 /**
  * What a container says about itself, read without decoding any application
@@ -25,9 +26,15 @@ public data class DocumentSummary(
     /** Size of the container file itself. */
     val archiveBytes: Long,
 ) {
-    /** Total declared uncompressed bytes. Declared, not verified — see [DocumentStore.validate]. */
+    /**
+     * Total declared uncompressed bytes. Declared, not verified — see
+     * [DocumentStore.validate].
+     *
+     * Every number here comes from a container this build did not write, so
+     * the sum saturates instead of wrapping. See [declaredTotalLength].
+     */
     public val declaredContentBytes: Long
-        get() = documentLength + assets.sumOf { it.length }
+        get() = declaredTotalLength(documentLength, assets)
 }
 
 /** The outcome of checking a container's structure and integrity. */

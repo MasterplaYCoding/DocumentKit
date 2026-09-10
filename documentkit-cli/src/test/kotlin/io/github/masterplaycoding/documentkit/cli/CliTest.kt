@@ -210,6 +210,180 @@ class CliTest {
         assertFalse(stderr().isEmpty())
     }
 
+    // --- the hostile corpus, through the command line -----------------------
+
+    /**
+     * Every shape documentkit-io's corpus rejects, as a file on disk.
+     *
+     * The library's own tests prove each is refused. They say nothing about
+     * what happens when the refusal has to travel out through a command: a
+     * DocumentException escaping `run` would reach a user as a Kotlin stack
+     * trace and an exit code nobody chose.
+     */
+    private fun hostileContainers(): Map<String, File> {
+        val cases = linkedMapOf<String, File>()
+
+        cases["not an archive"] = File(workspace, "text.dkit").apply { writeText("plain text") }
+        cases["an empty file"] = File(workspace, "empty.dkit").apply { writeBytes(ByteArray(0)) }
+
+        cases["a truncated archive"] = File(workspace, "truncated.dkit").also { target ->
+            val whole = wellFormed("source.dkit").readBytes()
+            target.writeBytes(whole.copyOf(whole.size / 2))
+        }
+
+        cases["a missing manifest"] = TestArchive(File(workspace, "no-manifest.dkit"))
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, """{"title":"x","notes":[]}""")
+            .build()
+
+        cases["a missing document"] = TestArchive(File(workspace, "no-document.dkit"))
+            .manifest(
+                Manifest(
+                    containerVersion = 1,
+                    applicationId = "example.notebook",
+                    schemaVersion = 2,
+                    documentId = "x",
+                    documentLength = 0,
+                    documentSha256 = TestArchive.sha256(ByteArray(0)),
+                ),
+            )
+            .build()
+
+        cases["a path traversal entry"] =
+            TestArchive.wellFormed(File(workspace, "traversal.dkit"))
+                .entry("../escape.txt", "payload")
+                .build()
+
+        cases["an entry outside the format"] =
+            TestArchive.wellFormed(File(workspace, "stowaway.dkit"))
+                .entry("notes.txt", "extra")
+                .build()
+
+        cases["a manifest that is not JSON"] = TestArchive(File(workspace, "bad-json.dkit"))
+            .entry(DocumentKitFormat.MANIFEST_ENTRY, """{"container_version":}""")
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, "{}")
+            .build()
+
+        cases["a manifest that is JSON but not an object"] =
+            TestArchive(File(workspace, "array.dkit"))
+                .entry(DocumentKitFormat.MANIFEST_ENTRY, "[]")
+                .entry(DocumentKitFormat.DOCUMENT_ENTRY, "{}")
+                .build()
+
+        cases["a container from a newer writer"] =
+            TestArchive.wellFormed(File(workspace, "future.dkit"), containerVersion = 99).build()
+
+        return cases
+    }
+
+    @Test
+    fun validateCallsEveryHostileContainerInvalid() {
+        for ((description, target) in hostileContainers()) {
+            out.clear()
+            err.clear()
+
+            // If run() throws, this test fails with that exception, which is
+            // the assertion: a user gets a verdict, not a stack trace.
+            val code = exec("validate", target.path)
+
+            assertEquals(EXIT_INVALID, code, "validate on $description returned $code")
+        }
+    }
+
+    @Test
+    fun inspectSurvivesEveryHostileContainer() {
+        // Weaker than validate on purpose. inspect reports what a container
+        // says about itself and verifies nothing, so a file whose manifest
+        // parses can legitimately be inspected even when it is unusable - a
+        // missing document.json is validate's business, not inspect's. What
+        // inspect owes the user is a verdict rather than a crash, and never
+        // exit 2, which means "you typed something wrong".
+        for ((description, target) in hostileContainers()) {
+            out.clear()
+            err.clear()
+
+            val code = exec("inspect", target.path)
+
+            assertTrue(
+                code == EXIT_OK || code == EXIT_INVALID,
+                "inspect on $description returned $code, which is an invocation error",
+            )
+        }
+    }
+
+    @Test
+    fun everyHostileContainerProducesAReasonSomeoneCanActOn() {
+        for ((description, target) in hostileContainers()) {
+            out.clear()
+            err.clear()
+            exec("validate", target.path)
+
+            val said = (stdout() + stderr()).trim()
+            assertTrue(said.isNotEmpty(), "validate said nothing at all about $description")
+            // A bare exception *type* is allowed and deliberate: DecodeFailure
+            // keeps it when no field name can be extracted, because "something
+            // was structurally wrong here" beats no detail at all. What must
+            // never escape is a stack trace or a package path, which is the
+            // shape that says nobody handled this.
+            assertFalse(
+                said.contains("\tat ") || said.contains("kotlinx.serialization."),
+                "validate leaked an unhandled failure for $description: $said",
+            )
+        }
+    }
+
+    @Test
+    fun inspectRefusesAManifestWhoseLengthsCannotAddUp() {
+        // inspect verifies nothing, which makes it tempting to assume it will
+        // report whatever the manifest claims. It will not: the manifest is
+        // validated before a summary is built, so lengths that cannot add up
+        // are a refusal rather than a number nobody can use.
+        //
+        // This is what keeps declaredContentBytes out of reach of an
+        // overflowing manifest on this path. The saturating sum behind it is
+        // still the property that must hold, and DocumentSummaryTest exercises
+        // it directly, because DocumentSummary is public and a caller can
+        // build one without coming through here.
+        val target = TestArchive(File(workspace, "overflow.dkit"))
+            .entry(
+                DocumentKitFormat.MANIFEST_ENTRY,
+                """{"container_version":1,"application_id":"example.notebook",""" +
+                    """"schema_version":2,"document_id":"x",""" +
+                    """"document_length":${Long.MAX_VALUE},""" +
+                    """"document_sha256":"${"a".repeat(64)}",""" +
+                    """"assets":[{"id":"big","length":${Long.MAX_VALUE},""" +
+                    """"sha256":"${"b".repeat(64)}"}]}""",
+            )
+            .entry(DocumentKitFormat.DOCUMENT_ENTRY, "{}")
+            .entry("assets/big", "x")
+            .build()
+
+        assertEquals(EXIT_INVALID, exec("inspect", target.path, "--json"))
+        assertFalse(
+            stdout().contains("declaredContentBytes"),
+            "a manifest that does not add up must not produce a summary at all",
+        )
+    }
+
+    @Test
+    fun theJsonOutputStaysWellFormedForABrokenContainer() {
+        // The failure mode this catches: a broken container producing half a
+        // JSON document, or a diagnostic printed before it. A caller piping
+        // this into a parser gets one or the other, and only ever one.
+        for ((description, target) in hostileContainers()) {
+            out.clear()
+            err.clear()
+            val code = exec("validate", target.path, "--json")
+
+            assertEquals(EXIT_INVALID, code, "on $description")
+            val text = stdout().trim()
+            assertTrue(
+                text.startsWith("{") && text.endsWith("}"),
+                "validate --json emitted something that is not one JSON object for " +
+                    "$description: $text",
+            )
+        }
+    }
+
     private fun readEntry(archive: File, name: String): ByteArray =
         java.util.zip.ZipFile(archive).use { zip ->
             zip.getInputStream(zip.getEntry(name)).use { it.readBytes() }

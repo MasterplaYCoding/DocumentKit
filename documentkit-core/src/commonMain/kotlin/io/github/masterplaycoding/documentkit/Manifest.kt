@@ -114,23 +114,41 @@ public data class Manifest(
     /**
      * Total declared uncompressed size. Advisory only - readers count bytes.
      *
-     * Saturates at [Long.MAX_VALUE] and ignores negative lengths, so a hostile
-     * manifest cannot make this return a small number. The naive sum wrapped:
-     * lengths adding past Long produced a value that would satisfy any check
-     * phrased as "the declared total is under N", which is the one job an
-     * advisory total has. Callers should still prefer [validate], which
-     * reports such a manifest as broken instead of quietly summing it.
+     * See the top-level [declaredTotalLength] for why this saturates rather
+     * than sums, and prefer [validate], which reports a manifest whose lengths
+     * do not add up as broken instead of quietly totalling it.
      */
-    public fun declaredTotalLength(): Long {
-        var total = documentLength.coerceAtLeast(0)
-        for (asset in assets) {
-            if (asset.length < 0) continue
-            if (total > Long.MAX_VALUE - asset.length) return Long.MAX_VALUE
-            total += asset.length
-        }
-        return total
-    }
+    public fun declaredTotalLength(): Long = declaredTotalLength(documentLength, assets)
 
     private fun isSha256(value: String): Boolean =
         value.length == 64 && value.all { it in '0'..'9' || it in 'a'..'f' }
+}
+
+/**
+ * Sums declared lengths without wrapping, ignoring negative ones.
+ *
+ * Shared rather than written twice, because it was written twice. [Manifest]
+ * and `DocumentSummary` each carried their own `documentLength +
+ * assets.sumOf { it.length }`, and both wrapped. A naive sum turns lengths
+ * that add past `Long` into a small - or negative - number, which satisfies
+ * any check phrased as "the declared total is under N". That is the only thing
+ * an advisory total is ever used for.
+ *
+ * Neither copy was reachable with an overflowing manifest through the reading
+ * paths - DocumentStore validates a manifest before summarising it - but both
+ * types are public and constructible, so the arithmetic has to hold for values
+ * that never came through a reader.
+ *
+ * Negative lengths are skipped rather than subtracted. A manifest carrying one
+ * is broken and [Manifest.validate] says so; it must not additionally be able
+ * to shrink a total someone is about to compare against a limit.
+ */
+public fun declaredTotalLength(documentLength: Long, assets: List<AssetEntry>): Long {
+    var total = documentLength.coerceAtLeast(0)
+    for (asset in assets) {
+        if (asset.length < 0) continue
+        if (total > Long.MAX_VALUE - asset.length) return Long.MAX_VALUE
+        total += asset.length
+    }
+    return total
 }
