@@ -6,6 +6,15 @@ plugins {
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.mavenPublish) apply false
     alias(libs.plugins.dokka) apply false
+    // Applied here, not per module: it configures every subproject, and each
+    // published module gets an api/<module>.api dump that apiCheck (part of
+    // check) compares the compiled classes against.
+    alias(libs.plugins.binaryCompatibilityValidator)
+}
+
+apiValidation {
+    // A sample, not a published artifact: its API is nobody's contract.
+    ignoredProjects += listOf("lantr-import")
 }
 
 allprojects {

@@ -28,6 +28,23 @@ change without a `container_version` bump and a migration note.
   `FuzzRegressionTest` replays them on every build - the roadmap's "fuzz
   regressions".
 
+- **The public binary API is a committed file.** The Kotlin
+  binary-compatibility-validator writes `api/*.api` for each published
+  module - JVM and Android separately for `documentkit-core` and
+  `documentkit-io` - and `apiCheck`, now part of `check`, fails when the
+  compiled classes stop matching them. Changing the API means `./gradlew
+  apiDump` and committing the diff. Confirmed to fail, printing the added
+  line, on one stray `public fun`.
+
+  The first dump showed two fields nobody meant to publish:
+  `DocumentTransfer.BUFFER_BYTES` and `STAGING_DIRECTORY_NAME`. They are
+  `const val`s in a `private companion object`, and a const val compiles to
+  a static field on the *outer* class with the property's own visibility -
+  public by default - so both had shipped as public binary API since 0.1,
+  readable from Java. Explicit API mode does not flag members of a private
+  companion. Each is now `private`, which removes them from the binary API;
+  no Kotlin caller could have referenced them.
+
 - **A compatibility corpus written by the released binaries.**
   `tools/compat-writer` is a standalone build that fetches a *released*
   `documentkit-io` from Maven Central and saves one fixed document; its output

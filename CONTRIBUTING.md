@@ -9,20 +9,32 @@
 JDK 17. The Android modules need an Android SDK; point Gradle at it with a
 `local.properties` containing `sdk.dir=…`, or set `ANDROID_HOME`.
 
-To check the published artifacts rather than the source tree:
+To check the published artifacts rather than the source tree - this publishes
+into a repository under `build/`, not `~/.m2`, which is shared and never
+cleaned:
 
 ```bash
-./gradlew publishToMavenLocal
+./gradlew verifyPublishedCoordinates
 ```
 
 ```bash
 cd consumer-check && ./gradlew run
 ```
 
+`./gradlew build` includes `apiCheck`, which compares the compiled public API
+with the committed `api/*.api` files. If you changed the API on purpose, run
+`./gradlew apiDump` and commit the diff with the change - the reviewer reads
+that diff as the API change. If you did not, the check has just told you
+something.
+
 ## What a change needs
 
 - **A test that fails without it.** For a parser or archive change, that means
-  a generated fixture in `MalformedInputTest`, not a committed binary.
+  a generated fixture in `MalformedInputTest` where one can be described. The
+  exceptions are inputs the fuzzer found, which nobody could have described in
+  advance: those are committed as-is in
+  `documentkit-io/src/jvmCommonTest/fuzz-regressions/`, each with a test in
+  `FuzzRegressionTest` pinning its exact error.
 - **A guarantee documented next to its limit.** This is a house rule. A
   persistence library that overstates what it promises is worse than one that
   promises less.

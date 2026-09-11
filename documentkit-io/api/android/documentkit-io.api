@@ -1,0 +1,110 @@
+public abstract interface class io/github/masterplaycoding/documentkit/io/AssetSource {
+	public static final field Companion Lio/github/masterplaycoding/documentkit/io/AssetSource$Companion;
+	public abstract fun openStream ()Ljava/io/InputStream;
+}
+
+public final class io/github/masterplaycoding/documentkit/io/AssetSource$Companion {
+	public final fun ofBytes ([B)Lio/github/masterplaycoding/documentkit/io/AssetSource;
+	public final fun ofFile (Ljava/io/File;)Lio/github/masterplaycoding/documentkit/io/AssetSource;
+}
+
+public final class io/github/masterplaycoding/documentkit/io/DocumentStore {
+	public fun <init> ()V
+	public fun <init> (Lio/github/masterplaycoding/documentkit/DocumentLimits;Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (Lio/github/masterplaycoding/documentkit/DocumentLimits;Lkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun buildVerifiedArchive (Ljava/io/File;Ljava/lang/Object;Ljava/lang/String;Lio/github/masterplaycoding/documentkit/DocumentCodec;Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun buildVerifiedArchive$default (Lio/github/masterplaycoding/documentkit/io/DocumentStore;Ljava/io/File;Ljava/lang/Object;Ljava/lang/String;Lio/github/masterplaycoding/documentkit/DocumentCodec;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun getLimits ()Lio/github/masterplaycoding/documentkit/DocumentLimits;
+	public final fun inspect (Ljava/io/File;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun open (Ljava/io/File;Lio/github/masterplaycoding/documentkit/DocumentCodec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun openStaged (Ljava/io/File;Lio/github/masterplaycoding/documentkit/DocumentCodec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun save (Ljava/io/File;Ljava/lang/Object;Ljava/lang/String;Lio/github/masterplaycoding/documentkit/DocumentCodec;Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun save$default (Lio/github/masterplaycoding/documentkit/io/DocumentStore;Ljava/io/File;Ljava/lang/Object;Ljava/lang/String;Lio/github/masterplaycoding/documentkit/DocumentCodec;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun validate (Ljava/io/File;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/masterplaycoding/documentkit/io/DocumentSummary {
+	public fun <init> (ILjava/lang/String;ILjava/lang/String;JLjava/util/List;IJ)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()I
+	public final fun component8 ()J
+	public final fun copy (ILjava/lang/String;ILjava/lang/String;JLjava/util/List;IJ)Lio/github/masterplaycoding/documentkit/io/DocumentSummary;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/io/DocumentSummary;ILjava/lang/String;ILjava/lang/String;JLjava/util/List;IJILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/io/DocumentSummary;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApplicationId ()Ljava/lang/String;
+	public final fun getArchiveBytes ()J
+	public final fun getAssets ()Ljava/util/List;
+	public final fun getContainerVersion ()I
+	public final fun getDeclaredContentBytes ()J
+	public final fun getDocumentId ()Ljava/lang/String;
+	public final fun getDocumentLength ()J
+	public final fun getEntryCount ()I
+	public final fun getSchemaVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/io/OpenedDocument : java/io/Closeable {
+	public fun close ()V
+	public final fun copyAssetTo-av4H8jg (Ljava/lang/String;Ljava/io/File;)V
+	public final fun getAssetIds ()Ljava/util/Set;
+	public final fun getCleanupWarning ()Ljava/lang/String;
+	public final fun getDocument ()Ljava/lang/Object;
+	public final fun getManifest ()Lio/github/masterplaycoding/documentkit/Manifest;
+	public final fun getMigrationsApplied ()Ljava/util/List;
+	public final fun openAsset-QPQyjlM (Ljava/lang/String;)Ljava/io/InputStream;
+	public final fun readAsset-QPQyjlM (Ljava/lang/String;)[B
+}
+
+public abstract class io/github/masterplaycoding/documentkit/io/SaveReceipt {
+	public abstract fun getBytesWritten ()J
+}
+
+public final class io/github/masterplaycoding/documentkit/io/SaveReceipt$AtomicReplace : io/github/masterplaycoding/documentkit/io/SaveReceipt {
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun copy (Ljava/lang/String;J)Lio/github/masterplaycoding/documentkit/io/SaveReceipt$AtomicReplace;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/io/SaveReceipt$AtomicReplace;Ljava/lang/String;JILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/io/SaveReceipt$AtomicReplace;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getBytesWritten ()J
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/io/SaveReceipt$ProviderManagedExport : io/github/masterplaycoding/documentkit/io/SaveReceipt {
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun copy (Ljava/lang/String;J)Lio/github/masterplaycoding/documentkit/io/SaveReceipt$ProviderManagedExport;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/io/SaveReceipt$ProviderManagedExport;Ljava/lang/String;JILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/io/SaveReceipt$ProviderManagedExport;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getBytesWritten ()J
+	public final fun getUri ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/io/ValidationReport {
+	public fun <init> (Lio/github/masterplaycoding/documentkit/io/DocumentSummary;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Lio/github/masterplaycoding/documentkit/io/DocumentSummary;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Lio/github/masterplaycoding/documentkit/io/DocumentSummary;Ljava/util/List;Ljava/util/List;)Lio/github/masterplaycoding/documentkit/io/ValidationReport;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/io/ValidationReport;Lio/github/masterplaycoding/documentkit/io/DocumentSummary;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/io/ValidationReport;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrors ()Ljava/util/List;
+	public final fun getScope ()Ljava/lang/String;
+	public final fun getSummary ()Lio/github/masterplaycoding/documentkit/io/DocumentSummary;
+	public final fun getVerifiedEntries ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isValid ()Z
+	public fun toString ()Ljava/lang/String;
+}
+

@@ -1,0 +1,499 @@
+public final class io/github/masterplaycoding/documentkit/AssetEntry {
+	public static final field Companion Lio/github/masterplaycoding/documentkit/AssetEntry$Companion;
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-PgCSciA ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy-YI0zc6g (Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/AssetEntry;
+	public static synthetic fun copy-YI0zc6g$default (Lio/github/masterplaycoding/documentkit/AssetEntry;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/AssetEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId-PgCSciA ()Ljava/lang/String;
+	public final fun getLength ()J
+	public final fun getMediaType ()Ljava/lang/String;
+	public final fun getSha256 ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class io/github/masterplaycoding/documentkit/AssetEntry$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lio/github/masterplaycoding/documentkit/AssetEntry$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/masterplaycoding/documentkit/AssetEntry;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/masterplaycoding/documentkit/AssetEntry;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/masterplaycoding/documentkit/AssetEntry$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/masterplaycoding/documentkit/AssetId {
+	public static final field Companion Lio/github/masterplaycoding/documentkit/AssetId$Companion;
+	public static final field MAX_LENGTH I
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/AssetId;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class io/github/masterplaycoding/documentkit/AssetId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lio/github/masterplaycoding/documentkit/AssetId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-aOmujEE (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-C9LR4_4 (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/masterplaycoding/documentkit/AssetId$Companion {
+	public final fun of-aOmujEE (Ljava/lang/String;)Ljava/lang/String;
+	public final fun parseOrNull-wCqbffE (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/masterplaycoding/documentkit/DecodeFailure {
+	public static final field INSTANCE Lio/github/masterplaycoding/documentkit/DecodeFailure;
+	public final fun describe (Ljava/lang/Throwable;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract class io/github/masterplaycoding/documentkit/DecodeResult {
+}
+
+public final class io/github/masterplaycoding/documentkit/DecodeResult$Failure : io/github/masterplaycoding/documentkit/DecodeResult {
+	public fun <init> (Lio/github/masterplaycoding/documentkit/DocumentError;)V
+	public final fun component1 ()Lio/github/masterplaycoding/documentkit/DocumentError;
+	public final fun copy (Lio/github/masterplaycoding/documentkit/DocumentError;)Lio/github/masterplaycoding/documentkit/DecodeResult$Failure;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DecodeResult$Failure;Lio/github/masterplaycoding/documentkit/DocumentError;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DecodeResult$Failure;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Lio/github/masterplaycoding/documentkit/DocumentError;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DecodeResult$Success : io/github/masterplaycoding/documentkit/DecodeResult {
+	public fun <init> (Ljava/lang/Object;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/Object;Ljava/util/List;)Lio/github/masterplaycoding/documentkit/DecodeResult$Success;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DecodeResult$Success;Ljava/lang/Object;Ljava/util/List;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DecodeResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDocument ()Ljava/lang/Object;
+	public final fun getMigrationsApplied ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentCodec {
+	public fun <init> (Ljava/lang/String;ILkotlinx/serialization/KSerializer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlinx/serialization/KSerializer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun decode (Lkotlinx/serialization/json/JsonObject;I)Lio/github/masterplaycoding/documentkit/DecodeResult;
+	public final fun encode (Ljava/lang/Object;)[B
+	public final fun getApplicationId ()Ljava/lang/String;
+	public final fun getMigrations ()Lio/github/masterplaycoding/documentkit/MigrationChain;
+	public final fun getReferencedAssets ()Lkotlin/jvm/functions/Function1;
+	public final fun getSchemaVersion ()I
+	public final fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun getValidate ()Lkotlin/jvm/functions/Function1;
+	public final fun parseBody-IoAF18A ([B)Ljava/lang/Object;
+}
+
+public abstract class io/github/masterplaycoding/documentkit/DocumentError {
+	public abstract fun getCode ()Ljava/lang/String;
+	public abstract fun getDetail ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$ApplicationValidationFailed : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$ApplicationValidationFailed;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$ApplicationValidationFailed;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$ApplicationValidationFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$AtomicReplaceUnsupported : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$AtomicReplaceUnsupported;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$AtomicReplaceUnsupported;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$AtomicReplaceUnsupported;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public final fun getDestination ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$DuplicateEntry : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$DuplicateEntry;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$DuplicateEntry;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$DuplicateEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getEntry ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$IntegrityMismatch : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$IntegrityMismatch;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$IntegrityMismatch;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$IntegrityMismatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActual ()Ljava/lang/String;
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getEntry ()Ljava/lang/String;
+	public final fun getExpected ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$InvalidEntry : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$InvalidEntry;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$InvalidEntry;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$InvalidEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getEntry ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$InvalidJson : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$InvalidJson;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$InvalidJson;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$InvalidJson;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getEntry ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$InvalidManifest : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$InvalidManifest;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$InvalidManifest;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$InvalidManifest;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$IoFailure : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$IoFailure;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$IoFailure;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$IoFailure;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getOperation ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$LimitExceeded : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun copy (Ljava/lang/String;J)Lio/github/masterplaycoding/documentkit/DocumentError$LimitExceeded;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$LimitExceeded;Ljava/lang/String;JILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$LimitExceeded;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowed ()J
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getLimit ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$MigrationFailed : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;IILjava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;IILjava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$MigrationFailed;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$MigrationFailed;Ljava/lang/String;IILjava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$MigrationFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getFrom ()I
+	public final fun getReason ()Ljava/lang/String;
+	public final fun getStep ()Ljava/lang/String;
+	public final fun getTo ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$MissingEntry : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$MissingEntry;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$MissingEntry;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$MissingEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getEntry ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$MissingMigration : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lio/github/masterplaycoding/documentkit/DocumentError$MissingMigration;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$MissingMigration;IIILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$MissingMigration;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getFrom ()I
+	public final fun getTo ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$MissingReferencedAsset : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$MissingReferencedAsset;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$MissingReferencedAsset;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$MissingReferencedAsset;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAssetId ()Ljava/lang/String;
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$UnsupportedContainer : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lio/github/masterplaycoding/documentkit/DocumentError$UnsupportedContainer;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$UnsupportedContainer;IIILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$UnsupportedContainer;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getFound ()I
+	public final fun getSupported ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$UnsupportedSchema : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lio/github/masterplaycoding/documentkit/DocumentError$UnsupportedSchema;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$UnsupportedSchema;IIILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$UnsupportedSchema;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getFound ()I
+	public final fun getSupported ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentError$WrongApplication : io/github/masterplaycoding/documentkit/DocumentError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/masterplaycoding/documentkit/DocumentError$WrongApplication;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentError$WrongApplication;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentError$WrongApplication;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCode ()Ljava/lang/String;
+	public fun getDetail ()Ljava/lang/String;
+	public final fun getExpected ()Ljava/lang/String;
+	public final fun getFound ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentException : java/lang/Exception {
+	public fun <init> (Lio/github/masterplaycoding/documentkit/DocumentError;)V
+	public final fun getError ()Lio/github/masterplaycoding/documentkit/DocumentError;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentKitFormat {
+	public static final field ASSET_PREFIX Ljava/lang/String;
+	public static final field CONTAINER_VERSION I
+	public static final field DOCUMENT_ENTRY Ljava/lang/String;
+	public static final field INSTANCE Lio/github/masterplaycoding/documentkit/DocumentKitFormat;
+	public static final field MANIFEST_ENTRY Ljava/lang/String;
+	public final fun assetPath-QPQyjlM (Ljava/lang/String;)Ljava/lang/String;
+	public final fun isKnownEntry (Ljava/lang/String;)Z
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentLimits {
+	public static final field Companion Lio/github/masterplaycoding/documentkit/DocumentLimits$Companion;
+	public fun <init> ()V
+	public fun <init> (JJIJJJI)V
+	public synthetic fun <init> (JJIJJJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()I
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun component7 ()I
+	public final fun copy (JJIJJJI)Lio/github/masterplaycoding/documentkit/DocumentLimits;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/DocumentLimits;JJIJJJIILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/DocumentLimits;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxArchiveBytes ()J
+	public final fun getMaxAssetBytes ()J
+	public final fun getMaxDocumentBytes ()J
+	public final fun getMaxEntryCount ()I
+	public final fun getMaxJsonDepth ()I
+	public final fun getMaxManifestBytes ()J
+	public final fun getMaxTotalUncompressedBytes ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentLimits$Companion {
+	public final fun getDefault ()Lio/github/masterplaycoding/documentkit/DocumentLimits;
+}
+
+public abstract interface class io/github/masterplaycoding/documentkit/DocumentMigration {
+	public abstract fun getFromVersion ()I
+	public abstract fun getName ()Ljava/lang/String;
+	public fun getToVersion ()I
+	public abstract fun migrate (Lkotlinx/serialization/json/JsonObject;)Lkotlinx/serialization/json/JsonObject;
+}
+
+public final class io/github/masterplaycoding/documentkit/DocumentMigration$DefaultImpls {
+	public static fun getToVersion (Lio/github/masterplaycoding/documentkit/DocumentMigration;)I
+}
+
+public final class io/github/masterplaycoding/documentkit/JsonDepth {
+	public static final field INSTANCE Lio/github/masterplaycoding/documentkit/JsonDepth;
+	public final fun exceeds (Ljava/lang/String;I)Ljava/lang/Integer;
+}
+
+public final class io/github/masterplaycoding/documentkit/Manifest {
+	public static final field Companion Lio/github/masterplaycoding/documentkit/Manifest$Companion;
+	public fun <init> (ILjava/lang/String;ILjava/lang/String;JLjava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (ILjava/lang/String;ILjava/lang/String;JLjava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (ILjava/lang/String;ILjava/lang/String;JLjava/lang/String;Ljava/util/List;)Lio/github/masterplaycoding/documentkit/Manifest;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/Manifest;ILjava/lang/String;ILjava/lang/String;JLjava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/Manifest;
+	public final fun declaredTotalLength ()J
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApplicationId ()Ljava/lang/String;
+	public final fun getAssets ()Ljava/util/List;
+	public final fun getContainerVersion ()I
+	public final fun getDocumentId ()Ljava/lang/String;
+	public final fun getDocumentLength ()J
+	public final fun getDocumentSha256 ()Ljava/lang/String;
+	public final fun getSchemaVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public final fun validate ()Ljava/util/List;
+}
+
+public final synthetic class io/github/masterplaycoding/documentkit/Manifest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lio/github/masterplaycoding/documentkit/Manifest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/masterplaycoding/documentkit/Manifest;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/masterplaycoding/documentkit/Manifest;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/masterplaycoding/documentkit/Manifest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class io/github/masterplaycoding/documentkit/ManifestKt {
+	public static final fun declaredTotalLength (JLjava/util/List;)J
+}
+
+public final class io/github/masterplaycoding/documentkit/MigrationChain {
+	public fun <init> (Ljava/util/List;I)V
+	public final fun getOldestSupportedVersion ()I
+	public final fun getTargetVersion ()I
+	public final fun migrate (Lkotlinx/serialization/json/JsonObject;I)Lio/github/masterplaycoding/documentkit/MigrationResult;
+}
+
+public final class io/github/masterplaycoding/documentkit/MigrationKt {
+	public static final fun documentMigration (Ljava/lang/String;ILkotlin/jvm/functions/Function1;)Lio/github/masterplaycoding/documentkit/DocumentMigration;
+}
+
+public abstract class io/github/masterplaycoding/documentkit/MigrationResult {
+}
+
+public final class io/github/masterplaycoding/documentkit/MigrationResult$Failure : io/github/masterplaycoding/documentkit/MigrationResult {
+	public fun <init> (Lio/github/masterplaycoding/documentkit/DocumentError;)V
+	public final fun component1 ()Lio/github/masterplaycoding/documentkit/DocumentError;
+	public final fun copy (Lio/github/masterplaycoding/documentkit/DocumentError;)Lio/github/masterplaycoding/documentkit/MigrationResult$Failure;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/MigrationResult$Failure;Lio/github/masterplaycoding/documentkit/DocumentError;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/MigrationResult$Failure;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Lio/github/masterplaycoding/documentkit/DocumentError;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/masterplaycoding/documentkit/MigrationResult$Success : io/github/masterplaycoding/documentkit/MigrationResult {
+	public fun <init> (Lkotlinx/serialization/json/JsonObject;Ljava/util/List;)V
+	public final fun component1 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Lkotlinx/serialization/json/JsonObject;Ljava/util/List;)Lio/github/masterplaycoding/documentkit/MigrationResult$Success;
+	public static synthetic fun copy$default (Lio/github/masterplaycoding/documentkit/MigrationResult$Success;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;ILjava/lang/Object;)Lio/github/masterplaycoding/documentkit/MigrationResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApplied ()Ljava/util/List;
+	public final fun getDocument ()Lkotlinx/serialization/json/JsonObject;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

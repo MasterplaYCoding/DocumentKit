@@ -204,7 +204,12 @@ public class DocumentTransfer(
     }
 
     private companion object {
-        const val STAGING_DIRECTORY_NAME = "documentkit-staging"
-        const val BUFFER_BYTES = 64 * 1024
+        // `private` on each, not only on the companion: a const val compiles to
+        // a static field on DocumentTransfer itself, with the property's own
+        // visibility. Without these modifiers both were public binary API -
+        // readable from Java as DocumentTransfer.BUFFER_BYTES - which the API
+        // dump showed the first time it was generated.
+        private const val STAGING_DIRECTORY_NAME = "documentkit-staging"
+        private const val BUFFER_BYTES = 64 * 1024
     }
 }

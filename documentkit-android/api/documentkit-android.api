@@ -1,0 +1,9 @@
+public final class io/github/masterplaycoding/documentkit/android/DocumentTransfer {
+	public fun <init> (Landroid/content/Context;Lio/github/masterplaycoding/documentkit/io/DocumentStore;Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (Landroid/content/Context;Lio/github/masterplaycoding/documentkit/io/DocumentStore;Lkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun cleanStagingDirectory ()I
+	public final fun exportCopy (Landroid/net/Uri;Ljava/lang/Object;Ljava/lang/String;Lio/github/masterplaycoding/documentkit/DocumentCodec;Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun exportCopy$default (Lio/github/masterplaycoding/documentkit/android/DocumentTransfer;Landroid/net/Uri;Ljava/lang/Object;Ljava/lang/String;Lio/github/masterplaycoding/documentkit/DocumentCodec;Ljava/util/Map;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun import (Landroid/net/Uri;Lio/github/masterplaycoding/documentkit/DocumentCodec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
