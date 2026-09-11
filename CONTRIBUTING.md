@@ -45,9 +45,12 @@ cd consumer-check && ./gradlew run
 
 ## Small, real contribution opportunities
 
-1. **Android instrumented tests** against a test `DocumentsProvider`: import,
-   export, a null stream, failure midway through a copy, permission denial and
-   cancellation. Currently the largest untested surface in the project.
+1. **On-device Android tests.** Import, export, a null stream, failure midway,
+   permission denial and cancellation are covered under Robolectric at API 24
+   and 36 (`DocumentTransferTest`). What that cannot reach is a real provider
+   app - Drive, Downloads, a vendor file manager - with its own quirks. An
+   instrumented suite against a `DocumentsProvider` on an emulator, or a
+   report of a provider that misbehaves, would both be welcome.
 2. **More malformed fixtures.** Anything the corpus does not yet cover — ZIP64
    edge cases, unusual compression methods, encrypted entries. Every new crash
    becomes a regression fixture.

@@ -9,6 +9,36 @@ change without a `container_version` bump and a migration note.
 
 ### Added
 
+- **`documentkit-android` is tested, at API 24 and API 36.** Until now the
+  module was proven to *resolve* by a consumer build and nothing more: the
+  Storage Access Framework code had no tests, the largest untested surface in
+  the project. `DocumentTransferTest` runs under Robolectric - the framework
+  code each API level ships, on the JVM - against a real `ContentProvider`
+  reached through Android's own `ContentResolver`, so `openInputStream` and
+  `openOutputStream` take the device path to a `ParcelFileDescriptor`. It
+  covers a round trip with assets, the staging copy the handle owns, a
+  provider that returns no stream, a revoked permission, a deleted document,
+  failure partway through either copy, an endless stream against the archive
+  limit, verification before the destination is opened, cancellation, and
+  staging cleanup that touches nothing else in the cache.
+
+  Two API levels, not one, and it showed why at once: making export open its
+  destination with `"w"` instead of `"wt"` fails at API 36 and passes at API
+  24, because older Android truncated on plain `"w"` and newer Android does
+  not. An export written and tested against an old device would pass there
+  and leave the old file's tail behind on a new one.
+
+  Every one of the behaviours was confirmed to fail its test when broken on
+  purpose. The roadmap said *instrumented* tests; the README says what
+  Robolectric does not reach - real provider apps, real storage, process
+  death - and CONTRIBUTING keeps on-device tests as open work.
+
+  The tests need Java 21 to simulate API 36, so the module's test task runs on
+  a Java 21 toolchain, downloaded by Gradle where absent; the library is still
+  compiled for, and published as, Java 17. API 36 also needs
+  `--add-exports java.base/jdk.internal.access` for Robolectric's
+  file-descriptor stand-in - test JVM only.
+
 - **The container specification is now machine-checked.**
   `docs/format-v1.md` calls itself normative and was, until now, prose sitting
   beside an unrelated implementation - accurate on the day it was written and

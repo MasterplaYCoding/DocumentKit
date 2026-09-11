@@ -12,6 +12,7 @@ kotlinx-coroutines = "1.10.2"
 android-minSdk = "24"
 android-compileSdk = "36"
 junit = "4.13.2"
+robolectric = "4.17"
 mavenPublish = "0.33.0"
 dokka = "2.2.0"
 
@@ -22,6 +23,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

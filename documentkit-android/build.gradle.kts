@@ -23,6 +23,14 @@ android {
     }
 
     sourceSets["main"].java.srcDir("src/main/kotlin")
+    sourceSets["test"].java.srcDir("src/test/kotlin")
+
+    // Robolectric runs these on the JVM against real Android framework code
+    // for each SDK named in @Config - no emulator. It needs the merged
+    // manifest and resources to build an Application.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 
     // No publishing { singleVariant(...) } block here: the publishing plugin
     // configures the release variant, and declaring it twice is an error.
@@ -30,6 +38,22 @@ android {
 
 kotlin {
     explicitApi()
+}
+
+// Robolectric's API 36 sandbox refuses to start on anything older than Java
+// 21. The tests run on a 21 toolchain on every machine - downloaded if absent
+// - rather than only on CI's JDK 21 leg: an API level tested on half the
+// matrix is an API level that silently goes untested on the other half. The
+// library's own bytecode target stays 17 (compileOptions above).
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(
+        javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) },
+    )
+    // API 36's framework creates shared memory through a FileDescriptor, and
+    // Robolectric's stand-in for that reaches into a JDK-internal package.
+    // Without this export every API 36 test dies in setup, before any of our
+    // code runs. Test JVM only.
+    jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
 }
 
 mavenPublishing {
@@ -81,4 +105,9 @@ dependencies {
     // api for the same reason as documentkit-io: DocumentTransfer's constructor
     // takes a CoroutineDispatcher and its operations suspend.
     api(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
 }

@@ -11,8 +11,9 @@ extracted from a real editor and made general.
 > The library and its format are implemented and covered by tests on Linux,
 > Windows and macOS, with an independent consumer build per platform proving
 > the published artifacts resolve. `documentkit-android` is verified by an
-> Android consumer build; it has no instrumented tests yet. Anything not
-> documented below is not built; see [Roadmap](#roadmap).
+> Android consumer build and tested under Robolectric at API 24 and 36 — real
+> framework code on the JVM, not a device. Anything not documented below is
+> not built; see [Roadmap](#roadmap).
 
 ---
 
@@ -279,7 +280,7 @@ CLI verifies the container and says so in as many words.
 | A cancelled open, import or export leaves none of DocumentKit's own resources behind: no open archive, no staging copy, no half-delivered handle. | It does not undo what already reached a destination: an export cancelled mid-copy has written what it wrote. And cancellation is not process death - a killed process can leave staging files, which `DocumentTransfer.cleanStagingDirectory()` removes on the next start. |
 | Reading is unaffected by bytes sitting before or after the archive: the content returned is the container's own, not a shifted misread of it. | DocumentKit does not certify that a file is *only* a container. A ZIP polyglot — a file that is simultaneously a valid container and a script or an image — opens as the document it holds. "Opened successfully" is not a statement that the file is inert. |
 | Migrations run through a complete, gap-free chain, validated when the codec is built. | Migrations transform JSON, one version per step, and never touch assets. Asset conversion is the application's job. |
-| Android export builds and verifies the archive privately before opening the destination. | The provider owns the destination. A `ProviderManagedExport` is a copy, not a crash-safe overwrite; an interruption mid-copy can leave partial content, and the error says so. |
+| Android export builds and verifies the archive privately before opening the destination, and truncates it when it does. Tested at API 24 and 36. | The provider owns the destination. A `ProviderManagedExport` is a copy, not a crash-safe overwrite; an interruption mid-copy can leave partial content, and the error says so. Tested against the framework's provider plumbing under Robolectric, not against real provider apps. |
 
 ## Modules
 
@@ -310,8 +311,15 @@ Android app, a CLI and a test.
 | `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
 | `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **released** |
 | `0.3` | Hostile-input hardening: manifest validation coverage, archive-level and command-line corpora, overflow fixes | **released** |
-| `0.4` | Android instrumented tests at API 24 and 36 | planned |
+| `0.4` | Android import/export tested at API 24 and 36 under Robolectric; cancellation that leaves nothing behind | **implemented**, release pending |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
+
+`0.4` originally said *instrumented* tests — on an emulator. They became
+Robolectric tests: the same framework code for each API level, run on the JVM
+in every CI job, where an emulator job would be slow and intermittently red.
+The cost is stated in the guarantees table: no real provider apps, storage or
+process death. On-device tests remain open work in
+[CONTRIBUTING](CONTRIBUTING.md).
 
 `0.4` also listed benchmarks. They were dropped in favour of **ceiling tests**:
 `memoryCeilingTest` saves, reads and validates a 512 MiB asset in a 192 MiB
