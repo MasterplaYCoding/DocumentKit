@@ -28,6 +28,16 @@ change without a `container_version` bump and a migration note.
   `FuzzRegressionTest` replays them on every build - the roadmap's "fuzz
   regressions".
 
+- **A compatibility policy, [docs/compatibility.md](docs/compatibility.md).**
+  What stays stable - saved files, the Kotlin API, behaviour, platforms -
+  what may change before and after 1.0, and, for every promise, the test or
+  check that fails if it is broken. Writing it found one promise with
+  nothing behind it: `DocumentError.code` is documented as stable and safe to
+  branch on, but the API dump records only that `getCode()` exists, not what
+  it returns. `ErrorCodeStabilityTest` now pins every code, through an
+  exhaustive `when` that stops compiling when a subtype is added, so a new
+  code is recorded the moment it is introduced and a renamed one fails.
+
 - **The public binary API is a committed file.** The Kotlin
   binary-compatibility-validator writes `api/*.api` for each published
   module - JVM and Android separately for `documentkit-core` and

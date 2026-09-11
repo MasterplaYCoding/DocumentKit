@@ -314,7 +314,7 @@ Android app, a CLI and a test.
 | `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **released** |
 | `0.3` | Hostile-input hardening: manifest validation coverage, archive-level and command-line corpora, overflow fixes | **released** |
 | `0.4` | Android import/export tested at API 24 and 36 under Robolectric; cancellation that leaves nothing behind | **released** |
-| `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
+| `1.0` | Stable API and format, compatibility policy, fuzz regressions | **in progress** — the policy, API checking, the compatibility corpus and fuzz regressions are implemented; 1.0 itself is the promise that the API stops changing |
 
 `0.4` originally said *instrumented* tests — on an emulator. They became
 Robolectric tests: the same framework code for each API level, run on the JVM
@@ -333,6 +333,7 @@ the build, and it runs on every CI job.
 ## Documentation
 
 - [Container format, version 1](docs/format-v1.md) — the normative specification.
+- [Compatibility](docs/compatibility.md) — what stays stable between versions, and what enforces each promise.
 - [Troubleshooting](docs/troubleshooting.md) — what each structured error means and what to do.
 - [Extracting a reusable persistence layer from Lantr](docs/decisions/001-extraction-from-lantr.md)
 - [Atomic replacement versus Android provider export](docs/decisions/002-atomic-replace-vs-provider-export.md)
