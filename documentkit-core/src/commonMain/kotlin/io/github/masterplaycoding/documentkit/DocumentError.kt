@@ -116,7 +116,13 @@ public sealed class DocumentError {
         override val detail: String get() = "document references asset '$assetId', which is absent"
     }
 
-    /** The application's own validation rejected the decoded model. */
+    /**
+     * The application's own validation rejected the decoded model - or one of
+     * the codec's own functions, `validate` or `referencedAssets`, threw on
+     * it. A rejection [reason] the application returned is passed through as
+     * written; for a thrown exception, only its class is kept, because its
+     * message may quote the document.
+     */
     public data class ApplicationValidationFailed(val reason: String) : DocumentError() {
         override val code: String get() = "ApplicationValidationFailed"
         override val detail: String get() = reason

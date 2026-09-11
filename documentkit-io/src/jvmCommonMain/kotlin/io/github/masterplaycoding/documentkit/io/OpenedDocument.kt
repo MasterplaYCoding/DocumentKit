@@ -59,7 +59,7 @@ public class OpenedDocument<T : Any> internal constructor(
             ?: throw DocumentException(
                 DocumentError.MissingEntry(DocumentKitFormat.assetPath(id)),
             )
-        return archive.getInputStream(entry)
+        return archive.openEntry(entry)
     }
 
     /**

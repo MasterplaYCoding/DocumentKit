@@ -87,6 +87,44 @@ tasks.named<Test>("jvmTest") {
     filter { excludeTestsMatching("*MemoryCeilingTest") }
 }
 
+/**
+ * FuzzTest with a large budget and a fresh seed.
+ *
+ * jvmTest runs the same fuzzer on a small fixed budget and seed, so every
+ * build is reproducible; this is the search. `-PfuzzIterations=` and
+ * `-PfuzzSeed=` override the defaults, and the seed in use is printed, so a
+ * finding can be replayed exactly. Findings land in build/fuzz-findings.
+ */
+val fuzzSweep by tasks.registering(Test::class) {
+    group = "verification"
+    description = "Mutation-fuzzes the reader with a large budget and a random seed."
+
+    val jvmTest = tasks.named<Test>("jvmTest")
+    testClassesDirs = files(jvmTest.map { it.testClassesDirs })
+    classpath = files(jvmTest.map { it.classpath })
+
+    filter { includeTestsMatching("*.FuzzTest") }
+    systemProperty(
+        "documentkit.fuzz.iterations",
+        providers.gradleProperty("fuzzIterations").getOrElse("50000"),
+    )
+    // "random" rather than a value computed here: the configuration cache
+    // would otherwise replay one seed on every run.
+    systemProperty("documentkit.fuzz.seed", providers.gradleProperty("fuzzSeed").getOrElse("random"))
+    systemProperty(
+        "documentkit.fuzz.findings",
+        layout.buildDirectory.dir("fuzz-findings").get().asFile.absolutePath,
+    )
+
+    // A search with a new seed is a new experiment; "up to date" would mean
+    // "skipped".
+    outputs.upToDateWhen { false }
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events("failed", "standard_out")
+    }
+}
+
 tasks.named("check") {
     dependsOn(memoryCeilingTest)
 }

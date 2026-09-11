@@ -122,7 +122,7 @@ public class DocumentStore(
                 if (documentEntry == null) {
                     errors += DocumentError.MissingEntry(DocumentKitFormat.DOCUMENT_ENTRY)
                 } else {
-                    val measured = archive.getInputStream(documentEntry).use {
+                    val measured = archive.openEntry(documentEntry).use {
                         it.copyMeasured(null, limits.maxDocumentBytes, "document size")
                     }
                     integrityError(
@@ -142,7 +142,7 @@ public class DocumentStore(
                         continue
                     }
                     val measured = try {
-                        archive.getInputStream(entry).use {
+                        archive.openEntry(entry).use {
                             it.copyMeasured(null, limits.maxAssetBytes, "asset size")
                         }
                     } catch (cause: DocumentException) {
@@ -326,7 +326,22 @@ public class DocumentStore(
             }
 
             val present = manifest.assets.map { it.id }.toSet()
-            for (referenced in codec.referencedAssets(decoded.document)) {
+            // Application code, run on an untrusted document. The README's own
+            // example builds ids with AssetId.of, which throws on a malformed
+            // one - so a hostile document can make a correct application's
+            // codec throw. Reported like the application's validation, and for
+            // the same reason without the exception's message: it can quote the
+            // document.
+            val referencedAssets = try {
+                codec.referencedAssets(decoded.document)
+            } catch (cause: Exception) {
+                throw DocumentException(
+                    DocumentError.ApplicationValidationFailed(
+                        "the codec's referencedAssets threw ${cause::class.java.simpleName} on this document",
+                    ),
+                )
+            }
+            for (referenced in referencedAssets) {
                 if (referenced !in present) {
                     throw DocumentException(
                         DocumentError.MissingReferencedAsset(referenced.value),
@@ -353,7 +368,7 @@ public class DocumentStore(
                 DocumentError.MissingEntry(DocumentKitFormat.MANIFEST_ENTRY),
             )
 
-        val bytes = archive.getInputStream(entry)
+        val bytes = archive.openEntry(entry)
             .use { it.readAtMost(limits.maxManifestBytes, "manifest size") }
 
         val text = decodeUtf8(bytes, DocumentKitFormat.MANIFEST_ENTRY)
@@ -401,7 +416,7 @@ public class DocumentStore(
             ?: throw DocumentException(
                 DocumentError.MissingEntry(DocumentKitFormat.DOCUMENT_ENTRY),
             )
-        val documentBytes = archive.getInputStream(documentEntry)
+        val documentBytes = archive.openEntry(documentEntry)
             .use { it.readAtMost(limits.maxDocumentBytes, "document size") }
 
         totalBytes += documentBytes.size
@@ -436,7 +451,7 @@ public class DocumentStore(
 
             val remaining = limits.maxTotalUncompressedBytes - totalBytes
             val cap = minOf(limits.maxAssetBytes, maxOf(remaining, 0L))
-            val measured = archive.getInputStream(entry)
+            val measured = archive.openEntry(entry)
                 .use { it.copyMeasured(target = null, limit = cap, limitName = "total content size") }
 
             totalBytes += measured.length

@@ -7,6 +7,71 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
+### Added
+
+- **A mutation fuzzer for the reader, and the regressions it found.**
+  `FuzzTest` takes valid containers - deflated and stored, with assets and a
+  legacy one that migrates - mutates them a few bytes at a time, and checks
+  `open`, `inspect` and `validate` against the contract `MalformedInputTest`
+  states: success or a named `DocumentException`, never another exception, a
+  hang, or a mutated container that opens with different content. Three
+  strategies, because raw byte flips almost never get past the ZIP layer:
+  raw bytes; `manifest.json` rebuilt into a valid ZIP (the manifest is not
+  digest-protected); and `document.json` re-digested, so the mutation
+  reaches the codec and migrations.
+
+  Every build runs 1,500 iterations on a fixed seed. `./gradlew
+  :documentkit-io:fuzzSweep` runs 50,000 (or `-PfuzzIterations=`) on a fresh
+  seed it prints, and CI runs 200,000 weekly, keeping findings as an
+  artifact. Inputs that found a bug live in
+  `documentkit-io/src/jvmCommonTest/fuzz-regressions/`, and
+  `FuzzRegressionTest` replays them on every build - the roadmap's "fuzz
+  regressions".
+
+### Fixed
+
+- **Damage in an entry's local header escaped as `ZipException` or
+  `EOFException`.** `java.util.zip` lists entries from the central directory
+  and reads an entry's local header only when its bytes are first read. A
+  file whose directory was intact and whose local header was not therefore
+  passed every structural check, then threw from the middle of `open`,
+  `inspect` or `validate` - past every `catch (e: DocumentException)` the
+  README tells callers to write. The fuzzer's first run found it six ways
+  within 1,500 iterations; the hand-written corpus never corrupted a local
+  header, only the directory.
+
+  Every read of archive bytes now goes through one function that turns
+  structural damage into `InvalidEntry`, naming the entry, and a plain I/O
+  failure into `IoFailure` - a failing disk is not a damaged document. The two
+  representative inputs are committed as regressions, each pinned to its
+  exact error; reverting the fix fails all three regression tests.
+
+- **`readAsset` trusted a size the file declared.** The reader has never
+  trusted ZIP size fields - it streams and verifies the real bytes, which is
+  why `docs/decisions/003` exists. But `readAsset` used `readBytes()`, which
+  sizes its first buffer from `available()`, and `java.util.zip` answers
+  `available()` with the entry's *declared* size. A container whose content
+  verified perfectly and whose central directory claimed 2 GB for a 300-byte
+  asset opened fine, then died in `readAsset` with `OutOfMemoryError:
+  Requested array size exceeds VM limit` - an unbounded allocation driven by
+  the file, in a function whose whole job is to be the simple option. Entry
+  streams now report `available()` as 0, which its contract allows, so
+  neither `readAsset` nor a caller's own `openAsset(…).readBytes()` can be
+  steered by the header. Found by the first 100,000-iteration fuzz sweep.
+
+- **A codec function that threw on a hostile document escaped `open`.**
+  `open` runs application code on untrusted input: the codec's `validate`
+  and `referencedAssets`. The README's own example builds asset ids with
+  `AssetId.of`, which throws on a malformed one, so a document giving a note
+  the image id `c]over` made a correct application's codec throw
+  `IllegalArgumentException` straight out of `open` - with the id in the
+  message. Both are now reported as `ApplicationValidationFailed`, naming the
+  function and the exception's class but not its message, which may quote
+  the document: errors DocumentKit writes carry no document content. A
+  rejection `validate` *returns* is still passed through as written. Found by
+  the same sweep, through the strategy that re-digests `document.json` so
+  mutations reach the codec.
+
 ## [0.4.0] - 2026-09-11
 
 `documentkit-android` tested at API 24 and 36, and a fix for handles leaked by a

@@ -86,4 +86,26 @@ class DocumentCodecTest {
         assertContains(error.reason, "title")
         assertContains(error.detail, DocumentKitFormat.DOCUMENT_ENTRY)
     }
+
+    @Test
+    fun aValidationThatThrowsIsARejectionThatDoesNotQuoteTheDocument() {
+        // The application's validate is code written for well-formed documents
+        // and handed hostile ones. When it throws, decode reports a rejection
+        // - it used to let the exception escape - and keeps only the class,
+        // because the message is free to quote the model.
+        val strict = DocumentCodec(
+            applicationId = "example.journal",
+            schemaVersion = 1,
+            serializer = Journal.serializer(),
+            validate = { journal -> error("cannot validate '${journal.title}'") },
+        )
+        val body = buildJsonObject { put("title", JsonPrimitive(secret)) }
+
+        val failure = assertIs<DecodeResult.Failure>(strict.decode(body, fromSchemaVersion = 1))
+
+        val error = assertIs<DocumentError.ApplicationValidationFailed>(failure.error)
+        assertContains(error.reason, "validate")
+        assertContains(error.reason, "IllegalStateException")
+        assertFalse(secret in error.toString(), "the error quotes the document: $error")
+    }
 }

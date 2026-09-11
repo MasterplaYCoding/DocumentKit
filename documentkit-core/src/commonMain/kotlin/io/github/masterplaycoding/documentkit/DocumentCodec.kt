@@ -103,7 +103,21 @@ public class DocumentCodec<T : Any>(
             )
         }
 
-        validate(model)?.let { reason ->
+        val rejection = try {
+            validate(model)
+        } catch (cause: Exception) {
+            // The application's validation ran into something it did not
+            // expect in *this* document - which, for a hostile file, is the
+            // point. A rejection, not a crash. Only the exception's class is
+            // kept: its message is free to quote the document, and errors
+            // this library produces never carry document content.
+            return DecodeResult.Failure(
+                DocumentError.ApplicationValidationFailed(
+                    "the codec's validate threw ${cause::class.simpleName ?: "an exception"} on this document",
+                ),
+            )
+        }
+        rejection?.let { reason ->
             return DecodeResult.Failure(DocumentError.ApplicationValidationFailed(reason))
         }
 
