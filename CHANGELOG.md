@@ -5,7 +5,14 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
-## [Unreleased]
+## [0.5.0] - unreleased
+
+The date becomes real on the day it is tagged; see [RELEASING.md](RELEASING.md).
+
+Three reader bugs found by a new fuzzer, each of which let a hostile file past
+the error contract; a compatibility policy with a check behind every promise;
+and a small binary-API removal - see *Changed* - which is why this is a minor
+release rather than a patch.
 
 ### Added
 
@@ -110,6 +117,21 @@ change without a `container_version` bump and a migration note.
   rejection `validate` *returns* is still passed through as written. Found by
   the same sweep, through the strategy that re-digests `document.json` so
   mutations reach the codec.
+
+### Changed
+
+- **`DocumentTransfer.BUFFER_BYTES` and `STAGING_DIRECTORY_NAME` are no
+  longer public.** They were never public in Kotlin - both are `const val`s
+  in a private companion object - but compiled to public static fields on
+  `DocumentTransfer`, and so were readable from Java. The API dump found
+  them (see *Added*). **Migration:** none for Kotlin callers; Java code that
+  read either field should use its own constant. Removing binary API is an
+  API change, and under [the compatibility policy](docs/compatibility.md)
+  API changes before 1.0 go in a minor release.
+- `DocumentError.ApplicationValidationFailed` now also covers a codec
+  function that *threw* on the document, not only a validation that returned
+  a reason. Callers who treated it as "the application said no" keep being
+  right; the reason text then names the function and exception class.
 
 ## [0.4.0] - 2026-09-11
 
