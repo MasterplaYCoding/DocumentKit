@@ -5,7 +5,12 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
-## [Unreleased]
+## [0.4.0] - unreleased
+
+The date becomes real on the day it is tagged; see [RELEASING.md](RELEASING.md).
+
+`documentkit-android` tested at API 24 and 36, and a fix for handles leaked by a
+cancelled open - the one change here that alters shipped behaviour; see *Fixed*.
 
 ### Added
 
