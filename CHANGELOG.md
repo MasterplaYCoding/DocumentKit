@@ -85,6 +85,29 @@ change without a `container_version` bump and a migration note.
 
 ### Fixed
 
+- **A caller cancelled as a document finished opening leaked it.**
+  `DocumentStore.open`, `openStaged` and `buildVerifiedArchive` ran on the
+  store's dispatcher through `withContext`, which has a prompt cancellation
+  guarantee: a caller cancelled while the block runs gets
+  `CancellationException` *even when the block completed*, and what the block
+  returned is discarded. What these return is an open archive handle - which
+  on Windows keeps the file locked until a garbage collection happens to
+  finalise it, so the next save cannot replace it - and, from `openStaged`
+  and `buildVerifiedArchive`, a file in a staging directory that nothing
+  would ever delete. `DocumentTransfer.import` wrapped the same pattern once
+  more. An editor cancels opens routinely: the user taps another document
+  before the first finishes loading.
+
+  Each now keeps a reference outside `withContext` and closes or deletes what
+  it produced if cancellation discards it. `CancelledOpenTest` (JVM) and
+  `DocumentTransferTest` (Android) force the race deterministically - the
+  codec's own `validate` cancels the caller, so the open completes and the
+  cancellation is only noticed on the way out - and failed before the fix:
+  the staging copy survived, the built archive survived, and on Windows the
+  opened file could not be renamed. `import`'s own guard covers a narrower
+  window, between `openStaged` returning and `import` resuming, that cannot
+  be forced on cue; it is there by construction, and not claimed as tested.
+
 - **The privacy claim was broader than the guarantee.** The README said errors
   "do not carry document contents" and named migration steps in the same
   sentence, while `MigrationChain` passes a migration's own exception message

@@ -12,6 +12,7 @@ import io.github.masterplaycoding.documentkit.io.OpenedDocument
 import io.github.masterplaycoding.documentkit.io.SaveReceipt
 import java.io.File
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,52 +49,79 @@ public class DocumentTransfer(
      * filling the device.
      *
      * The returned handle **owns** the staging copy and deletes it on `close`.
-     * Use it with `use { }`.
+     * Use it with `use { }`. If the caller is cancelled, no handle is returned
+     * and nothing is left behind.
+     *
+     * A provider that returns no stream is reported as
+     * [DocumentError.IoFailure]. Exceptions the provider throws itself pass
+     * through unchanged - `SecurityException` for a permission that was
+     * revoked, `FileNotFoundException` for a document that was deleted -
+     * because an application tells those apart to decide whether to ask the
+     * user to pick the file again.
      */
-    public suspend fun <T : Any> import(uri: Uri, codec: DocumentCodec<T>): OpenedDocument<T> =
-        withContext(dispatcher) {
-            val staging = File.createTempFile("import-", ".dkit", stagingDirectory)
+    public suspend fun <T : Any> import(uri: Uri, codec: DocumentCodec<T>): OpenedDocument<T> {
+        // Assigned inside withContext, read outside it, for the reason
+        // DocumentStore's deliverOrRelease gives: a caller cancelled as the
+        // block completes gets CancellationException, and the block's result -
+        // a handle that owns the staging copy - is discarded unless something
+        // out here still holds it and closes it.
+        var opened: OpenedDocument<T>? = null
+        try {
+            return withContext(dispatcher) {
+                copyIntoStaging(uri, codec).also { opened = it }
+            }
+        } catch (cancelled: CancellationException) {
+            opened?.close()
+            throw cancelled
+        }
+    }
 
-            try {
-                val input = context.contentResolver.openInputStream(uri)
-                    ?: throw DocumentException(
-                        // A null stream is a real outcome here - a revoked
-                        // permission, a deleted document, a provider that no
-                        // longer resolves - not an impossible one.
-                        DocumentError.IoFailure(
-                            "import",
-                            "the provider returned no input stream for $uri",
-                        ),
-                    )
+    private suspend fun <T : Any> copyIntoStaging(
+        uri: Uri,
+        codec: DocumentCodec<T>,
+    ): OpenedDocument<T> {
+        val staging = File.createTempFile("import-", ".dkit", stagingDirectory)
 
-                val limit = store.limits.maxArchiveBytes
-                var copied = 0L
-                input.use { source ->
-                    staging.outputStream().buffered().use { target ->
-                        val buffer = ByteArray(BUFFER_BYTES)
-                        while (true) {
-                            val read = source.read(buffer)
-                            if (read < 0) break
+        return try {
+            val input = context.contentResolver.openInputStream(uri)
+                ?: throw DocumentException(
+                    // A null stream is a real outcome here - a revoked
+                    // permission, a deleted document, a provider that no
+                    // longer resolves - not an impossible one.
+                    DocumentError.IoFailure(
+                        "import",
+                        "the provider returned no input stream for $uri",
+                    ),
+                )
 
-                            copied += read
-                            if (copied > limit) {
-                                throw DocumentException(
-                                    DocumentError.LimitExceeded("archive size", limit),
-                                )
-                            }
-                            target.write(buffer, 0, read)
+            val limit = store.limits.maxArchiveBytes
+            var copied = 0L
+            input.use { source ->
+                staging.outputStream().buffered().use { target ->
+                    val buffer = ByteArray(BUFFER_BYTES)
+                    while (true) {
+                        val read = source.read(buffer)
+                        if (read < 0) break
+
+                        copied += read
+                        if (copied > limit) {
+                            throw DocumentException(
+                                DocumentError.LimitExceeded("archive size", limit),
+                            )
                         }
+                        target.write(buffer, 0, read)
                     }
                 }
-
-                // openStaged hands ownership of the file to the returned
-                // handle, and deletes it itself if opening fails.
-                store.openStaged(staging, codec)
-            } catch (cause: Throwable) {
-                staging.delete()
-                throw cause
             }
+
+            // openStaged hands ownership of the file to the returned
+            // handle, and deletes it itself if opening fails.
+            store.openStaged(staging, codec)
+        } catch (cause: Throwable) {
+            staging.delete()
+            throw cause
         }
+    }
 
     /**
      * Writes a document to [uri] as a complete copy.

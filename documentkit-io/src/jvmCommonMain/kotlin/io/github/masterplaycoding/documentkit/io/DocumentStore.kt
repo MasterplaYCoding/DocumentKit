@@ -16,6 +16,7 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -62,7 +63,7 @@ public class DocumentStore(
     public suspend fun <T : Any> open(
         file: File,
         codec: DocumentCodec<T>,
-    ): OpenedDocument<T> = withContext(dispatcher) {
+    ): OpenedDocument<T> = deliverOrClose {
         openInternal(file, codec, ownedStagingFile = null)
     }
 
@@ -222,7 +223,7 @@ public class DocumentStore(
     public suspend fun <T : Any> openStaged(
         stagingFile: File,
         codec: DocumentCodec<T>,
-    ): OpenedDocument<T> = withContext(dispatcher) {
+    ): OpenedDocument<T> = deliverOrClose {
         try {
             openInternal(stagingFile, codec, ownedStagingFile = stagingFile)
         } catch (cause: Throwable) {
@@ -230,6 +231,36 @@ public class DocumentStore(
             // nothing else will ever delete it.
             stagingFile.delete()
             throw cause
+        }
+    }
+
+    private suspend fun <T : Any> deliverOrClose(
+        open: suspend () -> OpenedDocument<T>,
+    ): OpenedDocument<T> = deliverOrRelease(release = { it.close() }, produce = open)
+
+    /**
+     * Runs [produce] on the dispatcher and makes sure what it returns either
+     * reaches the caller or is [release]d.
+     *
+     * `withContext` has a prompt cancellation guarantee: a caller cancelled
+     * while the block runs gets `CancellationException` on the way out *even
+     * when the block completed*, and whatever the block returned is discarded.
+     * For a handle that owns an open archive - and, from [openStaged], a
+     * staging file - or for a freshly built archive, discarded means leaked:
+     * the file stays locked on Windows until a garbage collection finalises the
+     * handle, and a staging file is never deleted at all. Holding a reference
+     * outside the block is what lets it be released.
+     */
+    private suspend fun <R : Any> deliverOrRelease(
+        release: (R) -> Unit,
+        produce: suspend () -> R,
+    ): R {
+        var produced: R? = null
+        try {
+            return withContext(dispatcher) { produce().also { produced = it } }
+        } catch (cancelled: CancellationException) {
+            produced?.let(release)
+            throw cancelled
         }
     }
 
@@ -539,7 +570,7 @@ public class DocumentStore(
         documentId: String,
         codec: DocumentCodec<T>,
         assets: Map<AssetId, AssetSource> = emptyMap(),
-    ): File = withContext(dispatcher) {
+    ): File = deliverOrRelease(release = { it.delete() }) {
         val staged = buildArchive(workspace, document, documentId, codec, assets)
         try {
             openInternal(staged, codec, ownedStagingFile = null).close()
