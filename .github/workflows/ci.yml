@@ -67,6 +67,12 @@ jobs:
       - name: Android unit tests (Robolectric, API 24 and 36)
         run: ./gradlew :documentkit-android:testDebugUnitTest --stacktrace
 
+      # The public binary API is whatever api/*.api says it is. An exported
+      # signature that changes without a regenerated, committed dump fails here.
+      # In this job because the Android dumps need the Android SDK.
+      - name: Public API matches the committed dumps
+        run: ./gradlew apiCheck --stacktrace
+
   consumer:
     name: consumer build from published artifacts
     runs-on: ubuntu-latest
