@@ -48,7 +48,7 @@ jobs:
       # Everything the pull-request workflow runs, before anything leaves the
       # machine. A release is not the place to discover a test failure.
       - name: Test
-        run: ./gradlew :documentkit-core:jvmTest :documentkit-io:jvmTest :documentkit-cli:test :samples:lantr-import:test :documentkit-io:memoryCeilingTest --stacktrace
+        run: ./gradlew :documentkit-core:jvmTest :documentkit-io:jvmTest :documentkit-cli:test :samples:lantr-import:test :documentkit-io:memoryCeilingTest :documentkit-android:testDebugUnitTest --stacktrace
 
       - name: Verify every expected coordinate
         run: ./gradlew verifyPublishedCoordinates --stacktrace

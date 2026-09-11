@@ -316,7 +316,8 @@ Android app, a CLI and a test.
 
 `0.4` originally said *instrumented* tests — on an emulator. They became
 Robolectric tests: the same framework code for each API level, run on the JVM
-in every CI job, where an emulator job would be slow and intermittently red.
+on every push and gating every release, where an emulator job would be slow
+and intermittently red.
 The cost is stated in the guarantees table: no real provider apps, storage or
 process death. On-device tests remain open work in
 [CONTRIBUTING](CONTRIBUTING.md).

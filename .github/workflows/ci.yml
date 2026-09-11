@@ -57,6 +57,12 @@ jobs:
       - name: Assemble Android variants
         run: ./gradlew :documentkit-core:assembleRelease :documentkit-io:assembleRelease :documentkit-android:assembleRelease --stacktrace
 
+      # Storage Access Framework import and export under Robolectric, at API
+      # 24 and 36. Runs on a Java 21 toolchain, which Gradle downloads; the
+      # JDK set up above still builds the library.
+      - name: Android unit tests (Robolectric, API 24 and 36)
+        run: ./gradlew :documentkit-android:testDebugUnitTest --stacktrace
+
   consumer:
     name: consumer build from published artifacts
     runs-on: ubuntu-latest
