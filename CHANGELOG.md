@@ -75,6 +75,13 @@ change without a `container_version` bump and a migration note.
   identical content are identical files and the manifest digest means
   something; and defaults are written out rather than omitted, so a build that
   changes a default cannot silently reinterpret a document saved before it.
+- Migration privacy tests: one showing a migration's message reaching
+  `MigrationFailed.reason` with document content in it, one showing that the
+  failures DocumentKit words itself — a gap in the chain, a document from the
+  future — contain nothing from the document, and one covering an exception
+  with no message at all, which would otherwise produce an error that says a
+  step failed and nothing else. They back the narrowed privacy claim under
+  *Fixed*.
 
 ### Fixed
 
@@ -87,14 +94,14 @@ change without a `container_version` bump and a migration note.
   guarantees from the half the application controls, and the guarantees table
   carries the same boundary.
 
-### Added
+### Changed
 
-- Migration privacy tests: one showing a migration's message reaching
-  `MigrationFailed.reason` with document content in it, one showing that the
-  failures DocumentKit words itself — a gap in the chain, a document from the
-  future — contain nothing from the document, and one covering an exception
-  with no message at all, which would otherwise produce an error that says a
-  step failed and nothing else.
+- **Benchmarks are off the roadmap**, replaced by ceiling tests such as
+  `memoryCeilingTest` above: a benchmark produces a number nobody is obliged
+  to act on, a ceiling fails the build. The README's `0.4` row and
+  CONTRIBUTING's list say so. CONTRIBUTING also still offered the
+  `inspect`/`validate` CLI and the Lantr importer as open work; both shipped
+  in `0.2.0`.
 
 ## [0.3.0] - 2026-09-10
 

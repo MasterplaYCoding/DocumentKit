@@ -309,8 +309,14 @@ Android app, a CLI and a test.
 | `0.1` | Container format v1, codec, migration chain, JVM/Android archives, streamed assets, limits, validation, atomic local replacement, SAF import/export | **implemented** |
 | `0.2` | Inspect/validate CLI, integrity reporting, Lantr legacy importer | **released** |
 | `0.3` | Hostile-input hardening: manifest validation coverage, archive-level and command-line corpora, overflow fixes | **released** |
-| `0.4` | Android instrumented tests at API 24 and 36, benchmarks | planned |
+| `0.4` | Android instrumented tests at API 24 and 36 | planned |
 | `1.0` | Stable API and format, compatibility policy, fuzz regressions | planned |
+
+`0.4` also listed benchmarks. They were dropped in favour of **ceiling tests**:
+`memoryCeilingTest` saves, reads and validates a 512 MiB asset in a 192 MiB
+heap and fails with `OutOfMemoryError` if any stage stops streaming. A
+benchmark reports a number nobody is obliged to act on; a ceiling test fails
+the build, and it runs on every CI job.
 
 ## Documentation
 
