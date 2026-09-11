@@ -28,6 +28,18 @@ change without a `container_version` bump and a migration note.
   `FuzzRegressionTest` replays them on every build - the roadmap's "fuzz
   regressions".
 
+- **A compatibility corpus written by the released binaries.**
+  `tools/compat-writer` is a standalone build that fetches a *released*
+  `documentkit-io` from Maven Central and saves one fixed document; its output
+  for 0.2.0, 0.3.0 and 0.4.0 is committed, and `CompatibilityCorpusTest`
+  requires every build to open all of them to the same model and asset, and
+  to write the same manifest digests for the same content. Every other test
+  writes its fixtures with the current code, so none of them could notice a
+  change that stopped users' existing files from opening. The check is
+  semantic, as the format specification defines compatibility: the three
+  files differ only in ZIP entry times, which the specification places
+  outside the contract.
+
 ### Fixed
 
 - **Damage in an entry's local header escaped as `ZipException` or
