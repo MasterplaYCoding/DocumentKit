@@ -5,6 +5,8 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
+## [Unreleased]
+
 ## [0.4.0] - 2026-09-11
 
 `documentkit-android` tested at API 24 and 36, and a fix for handles leaked by a
