@@ -49,7 +49,7 @@ plugins {
 }
 
 dependencies {
-    implementation("io.github.masterplaycoding.documentkit:documentkit-io:0.4.0")
+    implementation("io.github.masterplaycoding.documentkit:documentkit-io:0.5.0")
 }
 ```
 
