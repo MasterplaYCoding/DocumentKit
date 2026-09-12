@@ -60,7 +60,7 @@ class CompatibilityCorpusTest {
         // A corpus that silently lost files would pass the tests below
         // trivially. 0.2.0 was the first release on Maven Central.
         val versions = corpus.map { it.name.removePrefix("written-by-").removeSuffix(".dkit") }
-        for (release in listOf("0.2.0", "0.3.0", "0.4.0")) {
+        for (release in listOf("0.2.0", "0.3.0", "0.4.0", "0.5.0")) {
             assertTrue(release in versions, "no file written by $release in $versions")
         }
     }

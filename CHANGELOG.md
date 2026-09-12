@@ -5,6 +5,8 @@ Notable changes are recorded here, following
 public API may change between minor versions; the container format will not
 change without a `container_version` bump and a migration note.
 
+## [Unreleased]
+
 ## [0.5.0] - 2026-09-12
 
 Three reader bugs found by a new fuzzer, each of which let a hostile file past
