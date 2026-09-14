@@ -1,5 +1,7 @@
 package io.github.masterplaycoding.documentkit.cli
 
+import io.github.masterplaycoding.documentkit.AssetEntry
+import io.github.masterplaycoding.documentkit.AssetId
 import io.github.masterplaycoding.documentkit.DocumentKitFormat
 import io.github.masterplaycoding.documentkit.Manifest
 import java.io.File
@@ -382,6 +384,106 @@ class CliTest {
                     "$description: $text",
             )
         }
+    }
+
+    // --- output a hostile file cannot take over ---------------------------
+
+    /**
+     * Characters a terminal acts on or a reader cannot see, planted in every
+     * string a manifest or an archive leaves unconstrained.
+     *
+     * Built from code points so no escape sequence has to survive an editor,
+     * and listed here rather than taken from the production predicate: a
+     * check that asked the code under test what counts as dangerous would
+     * pass whenever that code was wrong in the same way.
+     */
+    private val planted = listOf(
+        Char(0x1b) to "ESC",
+        Char(0x9b) to "C1 CSI",
+        Char(0x07) to "BEL",
+        Char(0x7f) to "DEL",
+        Char(0x0d) to "carriage return",
+        Char(0x202e) to "right-to-left override",
+        Char(0x2028) to "line separator",
+    )
+
+    private fun hostileText(prefix: String): String =
+        prefix + planted.joinToString("") { (character, _) -> "${character}x" }
+
+    private fun containerWithHostileStrings(name: String, strayEntry: Boolean): File {
+        val body = """{"title":"Fixture","notes":[]}""".toByteArray()
+        val cover = ByteArray(16) { 3 }
+        val archive = TestArchive(File(workspace, name)).manifest(
+            Manifest(
+                containerVersion = DocumentKitFormat.CONTAINER_VERSION,
+                applicationId = hostileText("example.notebook"),
+                schemaVersion = 2,
+                documentId = hostileText("fixture"),
+                documentLength = body.size.toLong(),
+                documentSha256 = TestArchive.sha256(body),
+                assets = listOf(
+                    AssetEntry(
+                        id = AssetId.of("cover"),
+                        length = cover.size.toLong(),
+                        sha256 = TestArchive.sha256(cover),
+                        mediaType = hostileText("image/png"),
+                    ),
+                ),
+            ),
+        )
+        archive.entry(DocumentKitFormat.DOCUMENT_ENTRY, body)
+        archive.entry(DocumentKitFormat.ASSET_PREFIX + "cover", cover)
+        if (strayEntry) archive.entry(hostileText("stowaway") + ".txt", "extra")
+        return archive.build()
+    }
+
+    private fun assertNothingPlantedIn(said: String, context: String) {
+        for ((character, label) in planted) {
+            assertFalse(
+                said.contains(character),
+                "$context printed a raw $label from the file:\n$said",
+            )
+        }
+    }
+
+    @Test
+    fun noStringFromTheFileReachesTheTerminalRaw() {
+        val cases = mapOf(
+            "hostile ids and media type" to containerWithHostileStrings("ids.dkit", strayEntry = false),
+            "a hostile entry name" to containerWithHostileStrings("entry.dkit", strayEntry = true),
+        )
+        for ((description, target) in cases) {
+            for (command in listOf("inspect", "validate")) {
+                for (json in listOf(false, true)) {
+                    out.clear()
+                    err.clear()
+                    val args = listOfNotNull(command, target.path, "--json".takeIf { json })
+                    val code = exec(*args.toTypedArray())
+
+                    val context = "${args.first()}${if (json) " --json" else ""} on $description"
+                    assertTrue(code == EXIT_OK || code == EXIT_INVALID, "$context returned $code")
+                    // Lines are joined with \n, which is fine; the planted
+                    // carriage return is not.
+                    assertNothingPlantedIn(stdout() + stderr(), context)
+                    // Escaped, not dropped: that the id contains an ESC is
+                    // the most useful thing the reader can learn about it.
+                    assertContains((stdout() + stderr()).lowercase(), "\\u001b", message = context)
+                }
+            }
+        }
+
+        // Escaping must not change the verdict on a container that is fine.
+        out.clear()
+        err.clear()
+        assertEquals(EXIT_OK, exec("validate", cases.getValue("hostile ids and media type").path))
+    }
+
+    @Test
+    fun aHostilePathIsEscapedWhenItIsNotAFile() {
+        val missing = File(workspace, hostileText("missing") + ".dkit")
+
+        assertEquals(EXIT_USAGE, exec("validate", missing.path))
+        assertNothingPlantedIn(stdout() + stderr(), "the not-a-file message")
     }
 
     private fun readEntry(archive: File, name: String): ByteArray =

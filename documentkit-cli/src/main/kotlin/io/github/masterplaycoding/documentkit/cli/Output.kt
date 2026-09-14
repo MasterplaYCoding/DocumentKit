@@ -5,15 +5,52 @@ import io.github.masterplaycoding.documentkit.io.DocumentSummary
 import io.github.masterplaycoding.documentkit.io.ValidationReport
 import java.io.File
 
-/** Human-readable output. */
+/**
+ * [value] with every character a terminal would act on, or a reader could not
+ * see, replaced by a `\uXXXX` escape.
+ *
+ * Nearly every string this tool prints came out of the file it was pointed
+ * at, and the files it is pointed at are the ones someone sent you. The
+ * manifest only requires application and document ids to be non-blank, media
+ * types are unconstrained, and an entry name is whatever the archive's author
+ * wrote. Printed raw, an ESC or a C1 CSI in a document id is an instruction to
+ * the terminal - move the cursor, rewrite the line that said ✗, retitle the
+ * window - and a right-to-left override makes one entry name read as another.
+ *
+ * Escaping rather than dropping keeps the evidence: a reader who sees \u001b
+ * in a document id has learned the most important thing about that file.
+ * Invisible formatting characters are escaped too, zero-width joiners
+ * included, so an emoji sequence in an id prints in pieces. For a tool whose
+ * job is to show what a file really contains, that is the right trade.
+ */
+internal fun visible(value: String): String {
+    if (value.none(::isUnprintable)) return value
+    return buildString {
+        for (character in value) {
+            if (isUnprintable(character)) append("\\u%04x".format(character.code)) else append(character)
+        }
+    }
+}
+
+/** C0 and C1 controls, DEL, and invisible formatting and separator characters. */
+internal fun isUnprintable(character: Char): Boolean = when (Character.getType(character)) {
+    Character.CONTROL.toInt(),
+    Character.FORMAT.toInt(),
+    Character.LINE_SEPARATOR.toInt(),
+    Character.PARAGRAPH_SEPARATOR.toInt(),
+    -> true
+    else -> false
+}
+
+/** Human-readable output. Every value that came from outside passes through [visible]. */
 internal object Text {
 
     fun summary(summary: DocumentSummary, file: File): String = buildString {
-        appendLine(file.name)
+        appendLine(visible(file.name))
         appendLine("  container version   ${summary.containerVersion}")
-        appendLine("  application         ${summary.applicationId}")
+        appendLine("  application         ${visible(summary.applicationId)}")
         appendLine("  schema version      ${summary.schemaVersion}")
-        appendLine("  document id         ${summary.documentId}")
+        appendLine("  document id         ${visible(summary.documentId)}")
         appendLine("  archive size        ${bytes(summary.archiveBytes)}")
         appendLine("  entries             ${summary.entryCount}")
         appendLine("  document.json       ${bytes(summary.documentLength)} (declared)")
@@ -25,8 +62,8 @@ internal object Text {
                 summary.assets.sumOf { it.length },
             )} declared")
             for (asset in summary.assets) {
-                val mediaType = asset.mediaType?.let { " · $it" } ?: ""
-                appendLine("    ${asset.id.value}  ${bytes(asset.length)}$mediaType")
+                val mediaType = asset.mediaType?.let { " · ${visible(it)}" } ?: ""
+                appendLine("    ${visible(asset.id.value)}  ${bytes(asset.length)}$mediaType")
             }
         }
 
@@ -40,16 +77,16 @@ internal object Text {
     fun report(report: ValidationReport, file: File): String = buildString {
         val summary = report.summary
         if (summary != null) {
-            appendLine("${file.name} — ${summary.applicationId} schema ${summary.schemaVersion}")
+            appendLine("${visible(file.name)} — ${visible(summary.applicationId)} schema ${summary.schemaVersion}")
         } else {
-            appendLine(file.name)
+            appendLine(visible(file.name))
         }
 
         for (entry in report.verifiedEntries) {
-            appendLine("  ✓ $entry")
+            appendLine("  ✓ ${visible(entry)}")
         }
         for (error in report.errors) {
-            appendLine("  ✗ ${error.code}: ${error.detail}")
+            appendLine("  ✗ ${error.code}: ${visible(error.detail)}")
         }
 
         appendLine()
@@ -131,7 +168,10 @@ internal object Json {
                 '\n' -> append("\\n")
                 '\r' -> append("\\r")
                 '\t' -> append("\\t")
-                else -> if (character < ' ') {
+                // Beyond what JSON requires: C1 controls, DEL and invisible
+                // formatting characters decode to the same string either way,
+                // and escaped they are also safe for someone who cats the output.
+                else -> if (character < ' ' || isUnprintable(character)) {
                     append("\\u%04x".format(character.code))
                 } else {
                     append(character)

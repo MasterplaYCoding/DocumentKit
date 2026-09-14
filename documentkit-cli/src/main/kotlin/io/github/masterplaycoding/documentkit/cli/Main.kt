@@ -53,7 +53,7 @@ internal fun run(args: Array<String>, out: (String) -> Unit, err: (String) -> Un
 
     val file = File(parsed.path)
     if (!file.isFile) {
-        err("not a file: ${parsed.path}")
+        err("not a file: ${visible(parsed.path)}")
         return EXIT_USAGE
     }
 
@@ -69,7 +69,7 @@ internal fun run(args: Array<String>, out: (String) -> Unit, err: (String) -> Un
     } catch (cause: Exception) {
         // Anything that is not a DocumentError is an environment problem -
         // permissions, a vanished file - not a verdict on the document.
-        err("could not read ${parsed.path}: ${cause.message ?: cause::class.simpleName}")
+        err("could not read ${visible(parsed.path)}: ${visible(cause.message ?: cause::class.simpleName.orEmpty())}")
         EXIT_USAGE
     }
 }
@@ -86,7 +86,7 @@ private suspend fun inspect(
     } catch (cause: DocumentException) {
         // inspect answers "what is this file?", and being unable to answer is
         // a fact about the document.
-        if (json) out(Json.error(cause.error)) else err("${cause.error.code}: ${cause.error.detail}")
+        if (json) out(Json.error(cause.error)) else err("${cause.error.code}: ${visible(cause.error.detail)}")
         return EXIT_INVALID
     }
 

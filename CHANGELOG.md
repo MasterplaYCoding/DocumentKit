@@ -7,6 +7,28 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
+### Security
+
+- **`documentkit inspect` and `validate` no longer print a file's strings
+  raw.** The files this tool is pointed at are the ones someone sent you, and
+  most of what it prints comes out of them: the manifest only requires
+  `application_id` and `document_id` to be non-blank, `media_type` is
+  unconstrained, and an error about a stray entry quotes that entry's name. An
+  ESC or C1 CSI planted there was an instruction to the terminal: move the
+  cursor, rewrite the line that said ✗, retitle the window. A right-to-left
+  override made one name read as another. Control, invisible formatting and
+  separator characters are now printed as `\uXXXX` escapes. They are escaped
+  rather than dropped, because an id containing `\u001b` is itself the
+  finding. JSON output escapes the same set beyond what JSON requires, which
+  decodes to identical strings. Asset ids were already safe (`A-Z a-z 0-9 .
+  _ -`), and the library's `DocumentError` details are unchanged: escaping
+  is the job of whatever displays them.
+
+  Covered by planting ESC, C1 CSI, BEL, DEL, CR, U+202E and U+2028 in every
+  unconstrained string, and checking `inspect` and `validate`, text and JSON.
+  Confirmed by removal: printing text values raw fails both new tests, and
+  escaping JSON only as the spec requires fails the container test.
+
 ### Added
 
 - **`FieldSweepTest`: every single-field change to a container's JSON,
