@@ -56,7 +56,7 @@ strings, are pinned below.
 |---|---|
 | Every row of the README's *Guarantees, each with its limit* table holds. Narrowing a guarantee is a breaking change, versioned like an API removal; widening one is not. | Each row names the test behind it. |
 | `DocumentError.code` strings are stable and safe to branch on. `detail` text is not — do not parse messages. | `ErrorCodeStabilityTest`: an exhaustive `when` over the sealed class, so a new subtype does not compile until its code is recorded, and a renamed code fails. |
-| A damaged or hostile container fails with a `DocumentException`, never another exception. | `MalformedInputTest`, `FuzzTest` and the fuzz regressions it has found. |
+| A damaged or hostile container fails with a `DocumentException`, never another exception. | `MalformedInputTest`; `FieldSweepTest`, which tries every single-field change to the manifest and document; `FuzzTest`, a random search over byte and text mutations; and the fuzz regressions it has found. |
 | Errors DocumentKit writes never contain document content. | `ErrorPrivacyTest` and the privacy assertions in the codec and fuzz-regression tests. |
 | The CLI exits `0` for a valid document, `1` for an invalid one, `2` for a bad invocation. | `CliTest`. |
 

@@ -7,6 +7,31 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
+### Added
+
+- **`FieldSweepTest`: every single-field change to a container's JSON,
+  deterministically.** The fuzzer is random, and random search is the wrong
+  tool for a bug that needs one particular field *and* one particular value -
+  EventLab's saved-plan fuzzer, random-only, missed a concurrency of `1.5` or
+  Infinity in 2,000 runs. The sweep takes every path in `manifest.json`, which
+  nothing digest-protects, and every path in `document.json`, re-digested so
+  the change reaches the codec. Each value is replaced with twenty edge values
+  (`null`, `-1`, `1.5`, `1e999`, a number past `Long.MAX_VALUE`, an empty and
+  a 10,000-character string, `[]`, `{}` and more) and deleted, and every
+  result is held to the same contract as the fuzzer. About 580 cases, under
+  two seconds.
+
+  It found no new bug: DocumentKit's JSON handling already holds for every
+  single-field change. What it adds is that a regression there can no longer
+  slip through on luck. Confirmed by reverting two fixes. Removing the wrap
+  around a throwing `referencedAssets` fails the document sweep at once, on
+  an empty `imageAssetId`; removing the wrap around manifest decoding fails
+  the manifest sweep with 15 distinct findings across `open`, `inspect` and
+  `validate`.
+
+  The oracle moved into `ContractOracle`, shared with `FuzzTest`, so the random
+  search and the sweep can never disagree about what counts as a finding.
+
 ## [0.5.0] - 2026-09-12
 
 Three reader bugs found by a new fuzzer, each of which let a hostile file past

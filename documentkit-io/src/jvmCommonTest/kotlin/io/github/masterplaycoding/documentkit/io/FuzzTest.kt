@@ -4,10 +4,6 @@ import io.github.masterplaycoding.documentkit.AssetId
 import io.github.masterplaycoding.documentkit.DocumentException
 import io.github.masterplaycoding.documentkit.DocumentKitFormat
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.zip.ZipFile
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -50,7 +46,7 @@ class FuzzTest {
 
     private lateinit var workspace: File
     private val store = DocumentStore()
-    private var executor: ExecutorService = Executors.newSingleThreadExecutor()
+    private lateinit var oracle: ContractOracle
 
     @BeforeTest
     fun setUp() {
@@ -58,11 +54,12 @@ class FuzzTest {
             delete()
             mkdirs()
         }
+        oracle = ContractOracle(store, workspace)
     }
 
     @AfterTest
     fun tearDown() {
-        executor.shutdownNow()
+        oracle.close()
         workspace.deleteRecursively()
     }
 
@@ -200,70 +197,10 @@ class FuzzTest {
 
     // --- the oracle --------------------------------------------------------------
 
-    private class Finding(val signature: String, val detail: String, val input: ByteArray, val label: String)
-
-    private val findings = LinkedHashMap<String, Finding>()
-
-    /**
-     * Runs [block] with a deadline. Returns a problem description, or null when
-     * the operation either succeeded or failed the way the contract allows.
-     */
-    private fun attempt(operation: String, block: suspend () -> Unit): Pair<String, String>? {
-        val future = executor.submit<Unit> { runBlocking { block() } }
-        return try {
-            future.get(20, TimeUnit.SECONDS)
-            null
-        } catch (timeout: TimeoutException) {
-            // A blocked reader cannot be interrupted from here; abandon it.
-            future.cancel(true)
-            executor.shutdownNow()
-            executor = Executors.newSingleThreadExecutor()
-            "$operation hung" to "no result within 20 s"
-        } catch (failure: java.util.concurrent.ExecutionException) {
-            val cause = failure.cause ?: failure
-            if (cause is DocumentException) {
-                null
-            } else {
-                val frame = cause.stackTrace.firstOrNull { it.className.contains("documentkit") }
-                    ?: cause.stackTrace.firstOrNull()
-                "$operation threw ${cause::class.java.name} at $frame" to cause.stackTraceToString()
-            }
-        }
-    }
-
+    /** Shared with [FieldSweepTest] through [ContractOracle], so both judge findings alike. */
     private fun examine(input: ByteArray, label: String, seed: Seed, equalityApplies: Boolean) {
-        val file = File(workspace, "case.dkit").apply { writeBytes(input) }
-
-        val problems = listOfNotNull(
-            attempt("open") {
-                store.open(file, notebookCodec).use { opened ->
-                    // Digests cover the document and every asset. A mutated
-                    // container that opens with different content and no
-                    // migration to explain it has slipped past integrity.
-                    val expected = seed.document
-                    if (equalityApplies && expected != null && opened.migrationsApplied.isEmpty()) {
-                        check(opened.document == expected) { "opened a different document: ${opened.document}" }
-                        for (asset in opened.manifest.assets) {
-                            val original = seed.assets[asset.id.value]
-                                ?: error("opened an asset the original did not have: ${asset.id.value}")
-                            check(opened.readAsset(asset.id).contentEquals(original)) {
-                                "asset ${asset.id.value} opened with different bytes"
-                            }
-                        }
-                    }
-                }
-            }?.let { (signature, detail) ->
-                // check() failures surface as IllegalStateException; label them
-                // as what they are rather than as a crash.
-                signature.replace("threw java.lang.IllegalStateException", "integrity oracle failed") to detail
-            },
-            attempt("inspect") { store.inspect(file) },
-            attempt("validate") { store.validate(file) },
-        )
-
-        for ((signature, detail) in problems) {
-            findings.getOrPut(signature) { Finding(signature, detail, input, label) }
-        }
+        val expected = seed.document?.takeIf { equalityApplies }?.let { ContractOracle.Expected(it, seed.assets) }
+        oracle.examine(input, label, expected)
     }
 
     @Test
@@ -297,18 +234,12 @@ class FuzzTest {
             }
         }
 
-        if (findings.isNotEmpty()) {
-            val out = File(System.getProperty("documentkit.fuzz.findings") ?: "build/fuzz-findings").apply { mkdirs() }
-            findings.values.forEachIndexed { index, finding ->
-                File(out, "finding-$index-${finding.label}.dkit").writeBytes(finding.input)
-                File(out, "finding-$index-${finding.label}.txt").writeText("${finding.signature}\n\n${finding.detail}")
-            }
-        }
+        oracle.writeFindings(File(System.getProperty("documentkit.fuzz.findings") ?: "build/fuzz-findings"))
 
         assertTrue(
-            findings.isEmpty(),
-            "seed $seedValue, $iterations iterations: ${findings.size} distinct finding(s)\n" +
-                findings.keys.joinToString("\n") { "  - $it" },
+            oracle.findings.isEmpty(),
+            "seed $seedValue, $iterations iterations: ${oracle.findings.size} distinct finding(s)\n" +
+                oracle.findings.keys.joinToString("\n") { "  - $it" },
         )
     }
 }
