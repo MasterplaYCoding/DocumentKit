@@ -7,9 +7,7 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
-## [0.5.1] - unreleased
-
-The date becomes real on the day it is tagged; see [RELEASING.md](RELEASING.md).
+## [0.5.1] - 2026-09-15
 
 A security fix in the command-line tool. The libraries' code and binary API
 are unchanged; they are republished at 0.5.1 so every module shares a version.
