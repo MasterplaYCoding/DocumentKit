@@ -23,6 +23,11 @@ jobs:
           java-version: "17"
 
       - uses: android-actions/setup-android@v3
+        with:
+          # The action's default also installs `tools`, which Google stopped
+          # serving on 2026-09-15 (android-actions/setup-android#537), failing
+          # the step. Gradle fetches the platforms and build-tools it needs.
+          packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@v4
 
