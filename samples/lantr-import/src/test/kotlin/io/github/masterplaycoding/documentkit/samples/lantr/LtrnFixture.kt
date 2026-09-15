@@ -25,6 +25,9 @@ class LtrnFixture(private val file: File) {
 
     fun entry(name: String, text: String): LtrnFixture = entry(name, text.toByteArray())
 
+    /** The entries so far, in order, for tests that rebuild a changed copy. */
+    fun contents(): List<Pair<String, ByteArray>> = entries.toList()
+
     fun build(): File {
         ZipOutputStream(file.outputStream().buffered()).use { output ->
             for ((name, bytes) in entries) {

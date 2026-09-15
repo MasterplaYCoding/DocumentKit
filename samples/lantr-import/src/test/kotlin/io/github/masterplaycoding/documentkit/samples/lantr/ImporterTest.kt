@@ -135,6 +135,28 @@ class ImporterTest {
     }
 
     @Test
+    fun namesASlideFileThatIsNotJson() {
+        val target = LtrnFixture(File(workspace, "broken-slide.ltrn"))
+            .entry("metadata.json", """{"title":"Broken"}""")
+            .entry("arc/blocks.json", """{"block_ids":["b"]}""")
+            .entry("arc/blocks/block_001.json", """{"id":"b","name":"S","slide_ids":["s"]}""")
+            .entry("slides/slide_001.json", """{"id":"s",""")
+            .build()
+
+        val report = LtrnImporter.import(target)
+
+        // The section's view - "slide 's' has no file" - is true, but it names
+        // the wrong culprit: the file is there, damaged. ImporterSweepTest only
+        // asks that a loss be reported somehow, so this pins that the damaged
+        // file itself is named, or the user goes looking for a missing slide.
+        assertTrue(
+            report.unsupported.any { it.where == "slides/slide_001.json" && it.what.contains("not valid JSON") },
+            report.unsupported.toString(),
+        )
+        assertTrue(report.presentation.sections.single().slides.isEmpty())
+    }
+
+    @Test
     fun reportsBlocksOfATypeItDoesNotUnderstand() {
         val target = LtrnFixture(File(workspace, "future.ltrn"))
             .entry("metadata.json", """{"title":"Future"}""")

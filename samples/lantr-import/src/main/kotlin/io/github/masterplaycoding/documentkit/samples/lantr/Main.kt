@@ -5,6 +5,7 @@ import io.github.masterplaycoding.documentkit.io.DocumentStore
 import java.io.File
 import java.io.FileDescriptor
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 import kotlin.system.exitProcess
@@ -16,35 +17,46 @@ import kotlinx.coroutines.runBlocking
  * Reads a Lantr archive and writes a DocumentKit container. The source is
  * opened read-only and never written to; the destination is a separate file
  * the caller names.
+ *
+ * Exit codes follow documentkit-cli: `0` imported, `1` the source could not be
+ * imported or the result could not be written, `2` bad arguments or a file
+ * that could not be read at all.
  */
 public fun main(args: Array<String>) {
     val out = PrintStream(FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8)
     val err = PrintStream(FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8)
 
+    exitProcess(run(args, out::println, err::println))
+}
+
+internal fun run(args: Array<String>, out: (String) -> Unit, err: (String) -> Unit): Int {
     if (args.size != 2) {
-        err.println("usage: lantr-import <source.ltrn> <destination.dkit>")
-        exitProcess(2)
+        err("usage: lantr-import <source.ltrn> <destination.dkit>")
+        return 2
     }
 
     val source = File(args[0])
     val destination = File(args[1])
 
     if (!source.isFile) {
-        err.println("not a file: ${source.path}")
-        exitProcess(2)
+        err("not a file: ${visible(source.path)}")
+        return 2
     }
-    if (destination.absolutePath == source.absolutePath) {
+    if (destination.absoluteFile.normalize() == source.absoluteFile.normalize()) {
         // The importer only reads the source, and this makes that impossible
         // to get wrong by mistyping one path.
-        err.println("refusing to write over the source file")
-        exitProcess(2)
+        err("refusing to write over the source file")
+        return 2
     }
 
     val report = try {
         LtrnImporter.import(source)
-    } catch (cause: Exception) {
-        err.println("could not read ${source.name}: ${cause.message}")
-        exitProcess(1)
+    } catch (refused: LtrnImportException) {
+        err("could not import ${visible(source.name)}: ${visible(refused.message.orEmpty())}")
+        return 1
+    } catch (failure: IOException) {
+        err("could not read ${visible(source.name)}: ${visible(failure.message ?: failure::class.simpleName.orEmpty())}")
+        return 2
     }
 
     try {
@@ -52,32 +64,54 @@ public fun main(args: Array<String>) {
             DocumentStore().save(
                 destination = destination,
                 document = report.presentation,
-                documentId = source.nameWithoutExtension,
+                // A container's id must not be blank, and a file called `.ltrn`
+                // has no name to give it.
+                documentId = source.nameWithoutExtension.ifBlank { "imported" },
                 codec = importedPresentationCodec,
                 assets = report.assets,
             )
         }
     } catch (cause: DocumentException) {
-        err.println("could not write ${destination.name}: ${cause.error.detail}")
-        exitProcess(1)
+        err("could not write ${visible(destination.name)}: ${visible(cause.error.detail)}")
+        return 1
     }
 
     val slides = report.presentation.sections.sumOf { it.slides.size }
-    out.println(
+    out(
         "imported ${report.presentation.sections.size} sections, $slides slides, " +
-            "${report.assets.size} images into ${destination.name}",
+            "${report.assets.size} images into ${visible(destination.name)}",
     )
 
-    if (report.unsupported.isEmpty()) {
-        exitProcess(0)
-    }
+    if (report.unsupported.isEmpty()) return 0
 
     // Printed in full, not summarised. The whole value of this tool over a
     // hand-written conversion is that it says what it left behind.
-    out.println()
-    out.println("not carried across (${report.unsupported.size}):")
+    out("")
+    out("not carried across (${report.unsupported.size}):")
     for ((where, what) in report.unsupported.distinct().sortedBy { it.where }) {
-        out.println("  $where — $what")
+        out("  ${visible(where)} — ${visible(what)}")
     }
-    exitProcess(0)
+    return 0
+}
+
+/**
+ * [value] with control, invisible-formatting and separator characters written
+ * as `\uXXXX` escapes.
+ *
+ * Entry names, image paths and block types come from the `.ltrn`, which is
+ * somebody else's file. Printed raw, an escape sequence in one is an
+ * instruction to the terminal. This is documentkit-cli's rule, repeated
+ * because the sample does not depend on that module.
+ */
+private fun visible(value: String): String = buildString {
+    for (character in value) {
+        when (Character.getType(character)) {
+            Character.CONTROL.toInt(),
+            Character.FORMAT.toInt(),
+            Character.LINE_SEPARATOR.toInt(),
+            Character.PARAGRAPH_SEPARATOR.toInt(),
+            -> append("\\u%04x".format(character.code))
+            else -> append(character)
+        }
+    }
 }

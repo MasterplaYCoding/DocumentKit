@@ -7,6 +7,43 @@ change without a `container_version` bump and a migration note.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Lantr importer sample crashed on, or silently dropped content from, a
+  damaged `.ltrn`.** It promises to name everything it does not carry across.
+  A new sweep, `ImporterSweepTest`, showed it did not. The sweep makes every
+  single-field change to every JSON file in a `.ltrn`: the same twenty edge
+  values as `FieldSweepTest`, plus deletion and "not JSON", 2,129 cases in
+  all. It found 62 distinct failures. A field of the wrong type (`"title": {}`,
+  `"blocks": 5`) threw kotlinx's `IllegalArgumentException` out of `import`.
+  Several things vanished with nothing in the report: a slide or section file
+  that was not JSON or had no id, a `slide_ids` entry pointing at no slide, and
+  a slide no section listed. A blank title imported, then failed to save.
+
+  The only refusal is now `LtrnImportException`, for a file that is not a ZIP
+  or has no readable `metadata.json`. Everything else is imported as far as it
+  goes and named. Wrong-typed fields are treated as absent. Sections without an
+  id follow in file order instead of disappearing. A blank title falls back to
+  the file name. Entry reads survive a damaged local header. The sweep holds
+  three rules: no other exception escapes; when a section, slide or block goes
+  missing, the report gains an item; and whatever imports saves and reopens.
+
+  Confirmed by reverting four fixes. Three fail the sweep, with 19, 4 and 1
+  findings. The fourth, a damaged slide file dropped without naming it, still
+  satisfies the sweep's deliberately weak rule, because the section reports
+  the slide as missing. A pinned test now requires the damaged file itself to
+  be named.
+
+- **`lantr-import` printed a file's names raw, and failed on a source called
+  `.ltrn`.** Entry names, image paths and block types now go through the same
+  escaping as `documentkit inspect`. A blank file name now gives the container
+  the id `imported`, where it used to fail the manifest's non-blank rule. The
+  command's logic moved into a testable `run`, with exit codes matching
+  documentkit-cli. Confirmed by removal. Printing names raw fails
+  `MainTest` on the first planted ESC. Dropping the id fallback lets
+  `documentId must not be blank` escape `run`, which is the stack trace a
+  user importing `.ltrn` used to get.
+
 ## [0.5.1] - 2026-09-15
 
 A security fix in the command-line tool. The libraries' code and binary API
