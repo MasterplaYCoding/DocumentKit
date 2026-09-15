@@ -11,7 +11,7 @@ is the strongest promise and the most heavily checked.
 
 | Promise | Enforced by |
 |---|---|
-| Every release opens every container every earlier release wrote. | `CompatibilityCorpusTest`, against files written by the **released** 0.2.0, 0.3.0 and 0.4.0 artifacts from Maven Central (`tools/compat-writer`). Each release adds its own file. |
+| Every release opens every container every earlier release wrote. | `CompatibilityCorpusTest`, against files written by the **released** 0.2.0, 0.3.0, 0.4.0, 0.5.0 and 0.5.1 artifacts from Maven Central (`tools/compat-writer`). Each release adds its own file. |
 | For the same content, a release writes the same document and asset digests as the releases before it. | The same test: it saves the corpus document with the current build and compares manifests. |
 | What a writer produces changes only with a `container_version` bump, which comes with an updated [format specification](format-v1.md), a changelog migration note, and a reader that still opens every earlier version. | The corpus test above, and `SpecificationConformanceTest`, which parses the specification's limits table and checks what a written container contains. |
 
